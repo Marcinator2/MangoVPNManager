@@ -27,8 +27,8 @@ Create a ruleset named `protected-development` for `develop` and another named
 - block branch deletion;
 - allow zero required approving reviews for the initial single-maintainer setup.
 
-Do not enable automatic dismissal or bypass rules for ordinary contributors.
-Repository administrators may retain emergency bypass access.
+Do not configure bypass actors. The repository owner must also use pull
+requests and successful status checks.
 
 ## Tag ruleset
 
