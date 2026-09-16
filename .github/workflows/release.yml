@@ -48,7 +48,7 @@ jobs:
 
       - name: Build Windows application
         shell: pwsh
-        run: .\build.ps1
+        run: .\build.ps1 -PythonExecutable (Get-Command python).Source
 
       - name: Verify and package release
         id: package

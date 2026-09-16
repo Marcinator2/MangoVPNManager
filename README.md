@@ -67,6 +67,9 @@ directory. Packaged execution uses `data/` beside the EXE. Both are ignored.
 .\scripts\assert-release-safe.ps1 -ApplicationDirectory .\dist\MangoVPNManager
 ```
 
+CI may pass an already provisioned interpreter explicitly with
+`-PythonExecutable`; local builds default to `.venv`.
+
 The build script preserves an existing packaged `data/` directory. The safety
 check therefore intentionally rejects a local release folder containing data.
 
