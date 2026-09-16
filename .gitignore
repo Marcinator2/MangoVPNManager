@@ -1,0 +1,67 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Build and releases
+build/
+dist/
+*.spec
+*.zip
+*.sha256
+
+# Runtime data
+data/
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+settings.json
+*.log
+*status*.tsv
+
+# Secrets and OpenVPN material
+.env
+.env.*
+!.env.example
+pki/
+pki-backups/
+exports/
+export/
+ccd/
+*.key
+*.pem
+*.p12
+*.pfx
+*.csr
+*.req
+*.crt
+*.cer
+*.ovpn
+ta.key
+
+# Local references and agent data
+sources/
+old_sample_files/
+.codex/
+.agents/
+
+# Editors and operating systems
+.vscode/
+.idea/
+*.user
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.tmp
+*.bak
+*~

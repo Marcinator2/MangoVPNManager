@@ -1,0 +1,385 @@
+# Mango VPN Manager — agent project context
+
+This repository contains Mango VPN Manager, a Windows desktop tool for managing
+branches, Mango routers, OpenVPN certificates, and configuration exports.
+
+## Immutable reference material
+
+- Treat every file under 'sources/' as read-only reference material.
+- Do not edit, rename, move, or delete files under 'sources/'.
+- Files under 'sources/' may be replaced when the ChatGPT project is synced.
+- 'sources/' is local-only and excluded from the public repository.
+
+## Platform and toolchain
+
+- Target platform: Windows Server 2022 or a compatible modern Windows version.
+- Supported Python version: Python 3.14.
+- Development environment: '.venv'.
+- GUI toolkit: PySide6.
+- Database: SQLite.
+- Packaging: PyInstaller through 'build.ps1'.
+- OpenVPN default root: 'C:\Program Files\OpenVPN'.
+- Easy-RSA default root: 'C:\Program Files\OpenVPN\easy-rsa'.
+- Live PKI default: 'C:\ProgramData\MangoVPNManager\pki'.
+- The implementation has been integration-tested with OpenVPN 2.7.7 and
+  Easy-RSA 3.2.6.
+
+Do not hardcode the currently configured VPN host, port, export directory, or
+other machine-specific values. They are user settings and may change.
+
+## Important data-location distinction
+
+'application_root()' is different between source and packaged execution:
+
+- Running 'python src\main.py' uses 'data/' in the repository.
+- Running the packaged EXE uses 'data/' beside the EXE in
+  'dist\MangoVPNManager\'.
+
+Do not assume that repository data and packaged-application data are the same.
+Never copy, replace, or merge either database automatically.
+
+## Project layout
+
+Primary files:
+
+- 'src/main.py': application entry point.
+- 'src/gui/main_window.py': main window, tree, and guided workflow.
+- 'src/gui/certificate_dialog.py': CA, server, and Mango certificate workflow.
+- 'src/gui/export_dialog.py': guided configuration export.
+- 'src/gui/theme.py': light/dark QSS and enabled/disabled button styling.
+- 'src/gui/sizing.py': translated-content-aware, screen-bounded dialog sizing.
+- 'src/gui/i18n.py': all English and German UI strings.
+- 'src/database/database.py': SQLite schema and persistence.
+- 'src/database/models.py': branch and Mango models.
+- 'src/openvpn/addressing.py': validation and address calculation.
+- 'src/openvpn/easyrsa.py': Easy-RSA/OpenVPN integration and PKI ACL handling.
+- 'src/openvpn/exporter.py': CCD, client, and server configuration generation.
+- 'src/openvpn/runtime.py': OpenVPN service-path discovery and live-status parsing.
+- 'src/openvpn/installer.py': confirmed server-file installation, backups, and
+  service restart.
+- 'tests/': automated tests.
+- 'icons/': company icon and code-native spin-box arrow assets.
+- 'build.ps1': Windows packaging script.
+- 'scripts/assert-release-safe.ps1': release-content safety gate.
+- 'scripts/capture_screenshot.py': synthetic documentation screenshot tool.
+- '.github/workflows/': Windows CI and tagged release automation.
+
+## Public repository hygiene
+
+- Public repository: 'Marcinator2/MangoVPNManager'.
+- Use English for comments, docstrings, commit messages, and documentation.
+  German is allowed only as localized UI content in 'src/gui/i18n.py'.
+- Never commit runtime databases, settings, logs, status files, PKI material,
+  OpenVPN profiles, exports, or private reference material.
+- 'main' contains release-ready changes; normal work targets 'develop' through
+  pull requests. Release tags use semantic versions such as 'v0.1.0'.
+- The MIT license covers source code. The mb-soft PNG and ICO logo files are
+  excluded as described in 'ASSETS-LICENSE.md'. 'mb-soft' is an unregistered
+  project name, not a registered company or trademark.
+- Run Gitleaks over complete history before publishing and in CI afterward.
+- A release is valid only after tests, the Windows build, and
+  'scripts/assert-release-safe.ps1' all pass.
+
+## Naming and addressing rules
+
+A Mango name is:
+
+'<branch number>_Mango<Mango number>'
+
+Example: '0004_Mango1'.
+
+The internal branch ID, not the visible branch number, controls addressing:
+
+- VPN address: '10.8.<internal ID>.<Mango number>'
+- Mango LAN: '10.<internal ID>.<Mango number>.0/24'
+- Mango LAN IP: '10.<internal ID>.<Mango number>.1'
+- Oven IP: '10.<internal ID>.<Mango number>.<100 + Mango number>'
+
+The VPN network is '10.8.0.0/16'. Internal branch ID '8' is reserved because
+its LAN networks would overlap the VPN range. Mango numbers are limited to
+1–10 per branch. Internal IDs are assigned automatically and must be unique.
+The internal ID is not exposed as an editable field in the normal branch flow.
+
+Validate all names and addresses before database writes and exports. Preserve
+the uniqueness constraints in SQLite.
+
+## Current user workflow
+
+The main window contains a four-step guided setup panel:
+
+1. Create branches and Mangos.
+2. Prepare the CA, server material, and Mango certificates.
+3. Enter the public VPN server address and port.
+4. Review, export, or explicitly install configurations.
+
+The primary “next step” button must always lead to the first incomplete step.
+The progress display is calculated from the database, configured PKI, server
+material, and saved VPN server address.
+
+In the certificate dialog the intended strict order is:
+
+1. Initialize PKI / CA.
+2. Create server material.
+3. Create all missing Mango certificates.
+
+Only currently meaningful actions should be enabled. Disabled buttons must
+remain visibly distinct in both light and dark themes. Keep the guidance label
+synchronized with the real state.
+
+Creating all missing Mango certificates is the primary, recommended, and
+default action once CA and server material are ready. Creating only the
+selected Mango certificate is a secondary exception action.
+
+In the export assistant:
+
+- Preview is always allowed.
+- Required missing fields are visually highlighted.
+- Repeated missing Mango certificate warnings are summarized.
+- The export button is enabled only when the VPN server address, CA, server
+  certificate/key, all selected Mango certificate/key pairs, and export
+  directory are available.
+- The TLS-crypt key is optional for export readiness but should be used when
+  available.
+- The certificate dialog can be opened directly from the export assistant.
+- VPN host, port, and the currently entered export directory are persisted when
+  the assistant closes, even when no export was written.
+- Changing host, port, PKI material, or certificates invalidates previously
+  stored configuration-created states.
+
+## Certificate and PKI behavior
+
+Certificate operations are real, not placeholders, and always require explicit
+user confirmation.
+
+- CA: passwordless, default validity 3650 days.
+- Mango client certificates: passwordless, default validity 825 days.
+- Server certificate: common name 'server', passwordless.
+- TLS-crypt key: generated as 'ta.key' through OpenVPN.
+- Never overwrite an existing certificate, request, or private key silently.
+- If a previous Easy-RSA failure left a matching private key and request but no
+  certificate, resume with 'sign-req'; do not regenerate or overwrite the key.
+- Refuse automatic recovery when only one side of a key/request pair exists.
+- Never display or log private key contents.
+- Easy-RSA process output must be sanitized before it reaches the UI.
+
+### Critical Windows ACL rule
+
+Easy-RSA/MSYS-created files can end up with protected empty ACLs. This previously
+made 'index.txt' unreadable after server-material creation and caused
+'BIO_new_file' / “could not load/parse index.txt” failures.
+
+The correct ACL strategy in 'harden_windows_acl()' is:
+
+1. Restrict the PKI root to the current user SID, Administrators, and SYSTEM,
+   with inheritable full-control entries.
+2. Reset descendant ACLs so they inherit those restricted root entries.
+3. Repair ACLs before and after every certificate operation.
+
+Do not restore the old recursive pattern that applied
+'/inheritance:r /grant:r ... /T' directly to every descendant; it produced
+files with no effective ACEs.
+
+Any real ACL or Easy-RSA integration test must use a temporary PKI. Do not run
+certificate creation against the live PKI during development or automated
+testing.
+
+## PKI reset behavior
+
+“Reset PKI” is recoverable and requires two confirmations, including typing
+'RESET PKI'.
+
+- Never delete the active PKI permanently.
+- Move it to a timestamped sibling backup:
+  'C:\ProgramData\MangoVPNManager\pki-backups\pki-<timestamp>'.
+- Refuse symlink paths, drive roots, missing PKIs, and unrecognized directories.
+- Reset certificate and configuration statuses only after a successful move.
+- Never invoke PKI reset automatically.
+
+## Configuration export
+
+A bundle contains:
+
+- 'server.ovpn'
+- 'server_routes.conf'
+- 'ccd/<Mango name>'
+- 'clients/<Mango name>.ovpn'
+- 'EXPORT_README.txt'
+
+Client profiles embed the existing CA certificate, client certificate, private
+client key, and TLS-crypt key when available. Private keys and TLS static keys
+must always be redacted from the on-screen preview. Before writing a bundle
+that contains private keys, require an explicit security confirmation.
+
+'server.ovpn' uses the '10.8.0.0/16' VPN pool and contains a route for every
+selected Mango LAN. It references the configured PKI and the normal OpenVPN
+configuration directory.
+
+Quoted Windows paths in generated OpenVPN configurations must contain doubled
+backslashes because OpenVPN treats a single backslash as an escape character.
+
+Exports must remain non-productive:
+
+- Write only to a user-selected export directory.
+- Reject OpenVPN installation directories as export targets.
+- Ask before replacing any existing export files.
+- Use staged writes with rollback on failure.
+- Do not install files into OpenVPN automatically.
+- Do not start or restart any Windows/OpenVPN service.
+
+Server installation is a separate, explicitly confirmed action:
+
+- Discover 'autostart_config_dir' and 'log_dir' from the OpenVPN machine
+  registry settings; use 'config-auto' and 'log' only as fallbacks.
+- Install only 'server.ovpn' and 'ccd/*'. Never install embedded client profiles
+  on the server.
+- Permit installation only for the complete “All Mangos” scope so a partial
+  selection cannot replace the full server routing configuration.
+- Back up replaced files to a timestamped sibling directory outside the
+  OpenVPN configuration scan directory.
+- After writing, reset the ACL of each exact managed 'server.ovpn' and 'ccd/*'
+  target so it inherits the readable ACL from the OpenVPN configuration
+  directory. Never apply a broad recursive ACL rewrite to the OpenVPN tree.
+- Detect missing ACL inheritance as a permission-repair-required state and
+  offer an explicitly confirmed repair action that touches only the expected
+  managed server files.
+- The OpenVPN service account receives read/traverse access only to the PKI
+  directories and four server runtime files it needs: 'ca.crt', 'ta.key',
+  'issued/server.crt', and 'private/server.key'. Never grant it access to
+  client keys or 'private/ca.key'. Detect missing runtime access as a
+  permission-repair-required state and require explicit confirmation.
+- Require confirmation before installation and a separate confirmation before
+  restarting the OpenVPN service. Never restart it automatically.
+- Protected installation directories may require the application to be run as
+  an administrator.
+- The export assistant compares the complete generated server file set with
+  the detected installation. Show a distinct installation card with
+  not-installed, update-required, current, or unknown state. Disable the
+  install action when all generated files already match.
+
+## Live OpenVPN status
+
+- The generated server configuration writes status-version 3 every 5 seconds
+  to the detected OpenVPN log directory.
+- The main window checks the Windows OpenVPN service and status file
+  immediately, then every second for the first 10 seconds, and every 5 seconds
+  afterward.
+- A server is green only when the Windows service is running and its status
+  file is fresh. Use red for stopped/stale and gray when status cannot be
+  determined.
+- Match connected Mangos by certificate common name. Show connected since,
+  remote peer IP, and the persisted last-seen time without displaying secrets.
+- Treat unavailable or stale status data as unknown rather than falsely
+  reporting a Mango as disconnected.
+
+## Database status semantics
+
+The database stores certificate-created and configuration-created state.
+
+- Certificate state is synchronized against actual PKI files.
+- Mark a configuration as created only after a complete export or confirmed
+  complete server installation.
+- Reset affected configuration status when its certificate changes.
+- Reset all configuration status when CA/server material, server host, or server
+  port changes.
+- PKI reset clears all certificate and configuration state.
+
+Do not report an item as ready based only on a stale database flag.
+
+## UI and localization
+
+- UI languages: English and German.
+- English is the default for a fresh installation; the chosen language persists.
+- Any new user-visible string must be added in both languages.
+- Themes: light and dark, both gray-based rather than pure white/black.
+- Disabled object-specific buttons must retain the common disabled style; add
+  explicit ':disabled' selectors when introducing a new button object style.
+- Preserve the company logo from 'icons/mb-soft.png' and packaged icon.
+- Keep spin-box arrows visible in both themes using the existing SVG assets.
+- Size dialogs from the current translated layout content and constrain them to
+  the available screen. Long action rows must switch to a stacked layout when
+  their complete button texts do not fit; do not truncate primary actions.
+
+## Security constraints
+
+- Treat the live PKI and packaged application database as production-like data.
+- Never print, preview, log, transmit, or inspect private key contents.
+- Listing certificate/key filenames, sizes, and existence is acceptable when
+  needed for diagnostics.
+- Do not include real keys, certificates, databases, settings, or exports in
+  the packaged application.
+- Do not silently overwrite certificates, keys, configs, or export files.
+- Productive system changes require explicit user confirmation.
+- Install configuration files or control OpenVPN services only through the
+  explicitly confirmed application actions described above.
+- Prefer temporary directories for integration tests and ensure they are
+  cleaned up.
+- Existing user data in a dirty worktree belongs to the user; preserve it.
+
+## Development and verification
+
+Create or refresh the environment only when needed:
+
+    py -3.14 -m venv .venv
+    .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+
+Run tests:
+
+    .\.venv\Scripts\python.exe -m pytest -q
+
+At the time this file was updated, the suite contains 55 passing tests.
+
+For risky Easy-RSA changes, supplement unit tests with a real integration test
+against an automatically deleted temporary PKI. A useful regression sequence
+is:
+
+1. Initialize CA.
+2. Create server material.
+3. Create two client certificates.
+4. Confirm that 'index.txt' remains readable after every step.
+
+Build the Windows application:
+
+    .\build.ps1
+
+Expected executable:
+
+'dist\MangoVPNManager\MangoVPNManager.exe'
+
+The build must bundle application code and icons only. It must not bundle
+'data/', PKI material, exports, or settings. After meaningful changes, run
+the full tests, build the EXE, and perform a short startup smoke test.
+
+'build.ps1' must build into a staging directory and update only the packaged
+EXE and '_internal' code directory. It must preserve an existing
+'dist\MangoVPNManager\data' directory, including on clean builds, and refuse
+deployment while the packaged application is running.
+
+## Maintaining this file
+
+- Update 'AGENTS.md' automatically whenever a project change makes its
+  architecture, workflows, safety rules, verification commands, test count, or
+  verified-state summary inaccurate. Keep it concise and do not record
+  transient implementation details.
+
+## Current verified state (2026-09-16)
+
+- Python 3.14 application and PyInstaller build work.
+- Light/dark themes and bilingual UI work.
+- Branch/Mango CRUD and automatic internal IDs work.
+- Guided four-step setup flow works.
+- Real CA, server-material, and Mango certificate operations are implemented.
+- Recoverable PKI reset is implemented.
+- Complete server/client/CCD export generation is implemented.
+- Explicit server installation with detected OpenVPN paths, recoverable
+  replacement backups, and separately confirmed service restart is implemented.
+- Live server/Mango connection indicators show connected-since, peer IP, and
+  persisted last-seen information.
+- Dialog widths adapt to translated content and long certificate actions stack
+  automatically on narrower displays.
+- Private material is redacted from previews.
+- The Windows ACL regression is fixed and the existing live PKI ACL was
+  repaired without changing certificate/key contents.
+- The real temporary-PKI sequence CA → server → two clients succeeds.
+- English public documentation, GitHub CI/release workflows, release-content
+  checks, and contribution/security templates are present.
+- The test suite passes with 58 tests.
