@@ -350,7 +350,8 @@ The build must bundle application code and icons only. It must not bundle
 the full tests, build the EXE, and perform a short startup smoke test.
 
 'build.ps1' must build into a staging directory and update only the packaged
-EXE and '_internal' code directory. It must preserve an existing
+EXE and '_internal' code directory. It defaults to '.venv' locally and accepts
+an explicit '-PythonExecutable' for CI. It must preserve an existing
 'dist\MangoVPNManager\data' directory, including on clean builds, and refuse
 deployment while the packaged application is running.
 

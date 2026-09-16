@@ -1,19 +1,24 @@
 [CmdletBinding()]
 param(
-    [switch]$Clean
+    [switch]$Clean,
+    [string]$PythonExecutable = ""
 )
 
 $ErrorActionPreference = "Stop"
 $projectRoot = $PSScriptRoot
-$pythonExe = Join-Path $projectRoot ".venv\Scripts\python.exe"
+$venvPython = Join-Path $projectRoot ".venv\Scripts\python.exe"
 $iconFile = Join-Path $projectRoot "icons\mb-soft.ico"
 $iconData = "$(Join-Path $projectRoot 'icons');icons"
 $buildDir = Join-Path $projectRoot "build"
 $stagingDist = Join-Path $buildDir "dist-staging"
 $targetDist = Join-Path $projectRoot "dist\MangoVPNManager"
 
-if (-not (Test-Path -LiteralPath $pythonExe)) {
-    throw "Missing .venv. Create it with: py -3.14 -m venv .venv"
+if ($PythonExecutable) {
+    $pythonExe = (Get-Item -LiteralPath $PythonExecutable -ErrorAction Stop).FullName
+} elseif (Test-Path -LiteralPath $venvPython -PathType Leaf) {
+    $pythonExe = $venvPython
+} else {
+    throw "Missing .venv. Create it with: py -3.14 -m venv .venv, or pass -PythonExecutable explicitly."
 }
 
 if ($Clean) {
