@@ -13,6 +13,8 @@ live connection status. It is published by the unregistered **mb-soft** project.
 
 - Manage branches and up to ten Mango routers per branch.
 - Calculate VPN and LAN addressing from protected internal branch IDs.
+- Show oven IP addresses, subnet masks, and gateways in the list.
+- Export all Mango rows to XLSX with localized headers and Excel filters.
 - Create a CA, server material, and passwordless Mango client certificates.
 - Generate server configuration, CCD files, and client profiles.
 - Preview exports with private material redacted.
@@ -94,6 +96,8 @@ files, or exports to an issue. See [SECURITY.md](SECURITY.md).
 - Mango LAN: `10.<internal ID>.<Mango number>.0/24`
 - Mango LAN IP: `10.<internal ID>.<Mango number>.1`
 - Oven IP: `10.<internal ID>.<Mango number>.<100 + Mango number>`
+- Oven subnet mask: `255.255.255.0`
+- Oven gateway: the Mango LAN IP (`10.<internal ID>.<Mango number>.1`)
 
 The VPN pool is `10.8.0.0/16`; internal branch ID `8` is reserved to prevent
 overlap with Mango LAN networks.
