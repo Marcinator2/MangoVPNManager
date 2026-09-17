@@ -108,6 +108,19 @@ Development happens on `develop`; release-ready changes reach `main` through a
 pull request. See [CONTRIBUTING.md](CONTRIBUTING.md), [ROADMAP.md](ROADMAP.md),
 and [CHANGELOG.md](CHANGELOG.md).
 
+To publish a development build, open **Actions > Develop Build > Run workflow**,
+select **develop**, leave **Publish a GitHub pre-release** enabled, and start the
+workflow. It scans the complete history for secrets, runs tests, builds Windows
+binaries, and checks the package for private or runtime data before publishing.
+Each run uses a unique `develop-<run ID>-<attempt>` tag on the exact tested commit
+and attaches a ZIP and SHA-256 checksum. It is marked as a pre-release and does
+not replace the latest stable release.
+
+Disable the publish checkbox for a build-only test. Both modes also provide
+downloadable workflow artifacts for 14 days. Only runs targeting `develop` are
+accepted. The workflow must remain on the repository's default branch for the
+manual run button to be available (currently `develop`).
+
 ## License and branding
 
 The source code is available under the [MIT License](LICENSE). `mb-soft` is an

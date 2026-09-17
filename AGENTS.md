@@ -62,7 +62,7 @@ Primary files:
 - 'build.ps1': Windows packaging script.
 - 'scripts/assert-release-safe.ps1': release-content safety gate.
 - 'scripts/capture_screenshot.py': synthetic documentation screenshot tool.
-- '.github/workflows/': Windows CI and tagged release automation.
+- '.github/workflows/': Windows CI, stable tagged releases, and manual develop builds.
 
 ## Public repository hygiene
 
@@ -72,7 +72,13 @@ Primary files:
 - Never commit runtime databases, settings, logs, status files, PKI material,
   OpenVPN profiles, exports, or private reference material.
 - 'main' contains release-ready changes; normal work targets 'develop' through
-  pull requests. Release tags use semantic versions such as 'v0.1.0'.
+  pull requests. Stable release tags use semantic versions such as 'v0.1.0'.
+- 'Develop Build' runs manually on 'develop', scans complete history, tests,
+  builds, and checks package contents before publishing a pre-release with a
+  unique 'develop-<run ID>-<attempt>' tag on the tested commit. It never replaces
+  the latest stable release. Disable its publish input for a build-only test;
+  both modes retain downloadable ZIP/checksum artifacts for 14 days. Keep the
+  workflow on the default branch (currently 'develop') for manual dispatch.
 - The MIT license covers source code. The mb-soft PNG and ICO logo files are
   excluded as described in 'ASSETS-LICENSE.md'. 'mb-soft' is an unregistered
   project name, not a registered company or trademark.
