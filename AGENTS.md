@@ -93,6 +93,8 @@ The internal branch ID, not the visible branch number, controls addressing:
 - VPN address: '10.8.<internal ID>.<Mango number>'
 - Mango LAN: '10.<internal ID>.<Mango number>.0/24'
 - Mango LAN IP: '10.<internal ID>.<Mango number>.1'
+- Oven subnet mask: derived from the Mango LAN network (`255.255.255.0`).
+- Oven gateway: the Mango LAN IP.
 - Oven IP: '10.<internal ID>.<Mango number>.<100 + Mango number>'
 
 The VPN network is '10.8.0.0/16'. Internal branch ID '8' is reserved because
@@ -145,6 +147,11 @@ In the export assistant:
   the assistant closes, even when no export was written.
 - Changing host, port, PKI material, or certificates invalidates previously
   stored configuration-created states.
+
+The main list includes oven IP, subnet mask, and gateway. Its separate XLSX
+export includes only Mango rows from all branches (including collapsed entries), uses
+localized headers, preserves text and leading zeroes, and requires confirmation
+before replacing a file. It does not change configuration-created statuses.
 
 ## Certificate and PKI behavior
 
@@ -326,7 +333,7 @@ Run tests:
 
     .\.venv\Scripts\python.exe -m pytest -q
 
-At the time this file was updated, the suite contains 55 passing tests.
+At the time this file was updated, the suite contains 63 passing tests.
 
 For risky Easy-RSA changes, supplement unit tests with a real integration test
 against an automatically deleted temporary PKI. A useful regression sequence
@@ -383,4 +390,4 @@ deployment while the packaged application is running.
 - The real temporary-PKI sequence CA → server → two clients succeeds.
 - English public documentation, GitHub CI/release workflows, release-content
   checks, and contribution/security templates are present.
-- The test suite passes with 58 tests.
+- The test suite passes with 63 tests.

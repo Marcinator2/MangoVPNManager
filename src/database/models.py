@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from ipaddress import IPv4Network
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,6 +26,14 @@ class Mango:
     config_created: bool = False
     branch_number: str = ""
     last_seen_at: str = ""
+
+    @property
+    def oven_subnet_mask(self) -> str:
+        return str(IPv4Network(self.lan_network).netmask)
+
+    @property
+    def oven_gateway(self) -> str:
+        return self.mango_ip
 
 
 @dataclass(frozen=True, slots=True)

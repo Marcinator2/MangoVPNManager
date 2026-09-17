@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from datetime import datetime
+from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction, QActionGroup, QBrush, QCloseEvent, QColor, QPixmap
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QApplication,
+    QFileDialog,
     QFrame,
     QGraphicsDropShadowEffect,
     QHBoxLayout,
@@ -28,6 +30,7 @@ from gui.certificate_dialog import CertificateDialog
 from gui.export_dialog import ExportDialog
 from gui.i18n import Translator
 from gui.mango_dialog import MangoDialog
+from gui.spreadsheet import write_list_xlsx
 from gui.theme import apply_theme, theme_color
 from openvpn.addressing import ValidationError
 from openvpn.easyrsa import EasyRSAPaths, EasyRSAService
@@ -71,7 +74,7 @@ class MainWindow(QMainWindow):
     def _build_ui(self) -> None:
         self.tree = QTreeWidget()
         self.tree.setObjectName("mainTree")
-        self.tree.setColumnCount(13)
+        self.tree.setColumnCount(15)
         self.tree.setSelectionMode(QAbstractItemView.SingleSelection)
         self.tree.setAlternatingRowColors(True)
         self.tree.itemDoubleClicked.connect(self._edit_selected)
@@ -85,6 +88,8 @@ class MainWindow(QMainWindow):
         self.delete_mango_button = QPushButton()
         self.certificate_button = QPushButton()
         self.export_button = QPushButton()
+        self.xlsx_button = QPushButton()
+        self.xlsx_button.clicked.connect(self.export_list)
         self.add_branch_button.setObjectName("addButton")
         self.add_mango_button.setObjectName("addButton")
         self.delete_branch_button.setObjectName("dangerButton")
@@ -199,6 +204,10 @@ class MainWindow(QMainWindow):
         central_layout.addWidget(self.workflow_frame)
         central_layout.addWidget(self.runtime_frame)
         central_layout.addLayout(button_layout)
+        list_actions = QHBoxLayout()
+        list_actions.addStretch()
+        list_actions.addWidget(self.xlsx_button)
+        central_layout.addLayout(list_actions)
         central_layout.addWidget(self.tree, 1)
         central = QWidget()
         central.setLayout(central_layout)
@@ -243,6 +252,7 @@ class MainWindow(QMainWindow):
         self.delete_mango_button.setText(self.t("delete_mango"))
         self.certificate_button.setText(self.t("certificates"))
         self.export_button.setText(self.t("export"))
+        self.xlsx_button.setText(self.t("export_list"))
         self.notice_label.setText(self.t("phase1_notice"))
         self.server_status_title.setText(self.t("server_live_status"))
         self.workflow_title_label.setText(self.t("workflow_title"))
@@ -258,6 +268,8 @@ class MainWindow(QMainWindow):
                 self.t("lan_network"),
                 self.t("mango_ip"),
                 self.t("oven_ip"),
+                self.t("oven_subnet_mask"),
+                self.t("oven_gateway"),
                 self.t("certificate"),
                 self.t("configuration"),
                 self.t("connection"),
@@ -315,7 +327,7 @@ class MainWindow(QMainWindow):
                 [
                     branch.branch_number,
                     str(branch.internal_id),
-                    "", "", "", "", "", "", "", "", "", "",
+                    *([""] * 12),
                     branch.description,
                 ]
             )
@@ -339,6 +351,8 @@ class MainWindow(QMainWindow):
                         mango.lan_network,
                         mango.mango_ip,
                         mango.oven_ip,
+                        mango.oven_subnet_mask,
+                        mango.oven_gateway,
                         self.t("yes") if mango.certificate_created else self.t("no"),
                         self.t("yes") if mango.config_created else self.t("no"),
                         self.t("unknown"),
@@ -353,8 +367,8 @@ class MainWindow(QMainWindow):
                 if mango.id is not None:
                     self._mango_items[mango.id] = mango_item
                 for column, ready in (
-                    (6, mango.certificate_created),
-                    (7, mango.config_created),
+                    (8, mango.certificate_created),
+                    (9, mango.config_created),
                 ):
                     mango_item.setForeground(
                         column,
@@ -442,30 +456,30 @@ class MainWindow(QMainWindow):
             if connection is not None:
                 state = "online"
                 status_text = self.t("connected")
-                item.setText(9, self._format_time(connection.connected_since))
-                item.setText(10, connection.remote_address)
-                item.setText(11, self._format_time(snapshot.updated_at))
+                item.setText(11, self._format_time(connection.connected_since))
+                item.setText(12, connection.remote_address)
+                item.setText(13, self._format_time(snapshot.updated_at))
                 connected_ids.append(mango.id)
             elif healthy:
                 state = "offline"
                 status_text = self.t("disconnected")
-                item.setText(9, "")
-                item.setText(10, "")
-                item.setText(11, self._format_stored_time(mango.last_seen_at))
+                item.setText(11, "")
+                item.setText(12, "")
+                item.setText(13, self._format_stored_time(mango.last_seen_at))
             else:
                 state = "unknown"
                 status_text = self.t("unknown")
-                item.setText(9, "")
-                item.setText(10, "")
-                item.setText(11, self._format_stored_time(mango.last_seen_at))
-            item.setText(8, f"●  {status_text}")
+                item.setText(11, "")
+                item.setText(12, "")
+                item.setText(13, self._format_stored_time(mango.last_seen_at))
+            item.setText(10, f"●  {status_text}")
             color_name = {
                 "online": "ready",
                 "offline": "offline",
                 "unknown": "pending",
             }[state]
-            item.setForeground(8, QBrush(QColor(theme_color(self.settings.theme, color_name))))
-            item.setTextAlignment(8, Qt.AlignCenter)
+            item.setForeground(10, QBrush(QColor(theme_color(self.settings.theme, color_name))))
+            item.setTextAlignment(10, Qt.AlignCenter)
 
         now = datetime.now().astimezone()
         should_store = (
@@ -610,6 +624,7 @@ class MainWindow(QMainWindow):
         self.edit_mango_button.setEnabled(mango_selected)
         self.delete_mango_button.setEnabled(mango_selected)
         self.export_button.setEnabled(has_mangos)
+        self.xlsx_button.setEnabled(has_branches)
 
     def _sync_certificate_statuses(self) -> None:
         service = EasyRSAService(
@@ -751,6 +766,36 @@ class MainWindow(QMainWindow):
         )
         dialog.exec()
         self.reload_tree()
+
+    def export_list(self) -> None:
+        filename, _ = QFileDialog.getSaveFileName(
+            self, self.t("export_list"), "MangoVPNManager.xlsx",
+            self.t("xlsx_filter"), options=QFileDialog.DontConfirmOverwrite,
+        )
+        if not filename:
+            return
+        path = Path(filename)
+        if path.suffix.lower() != ".xlsx":
+            path = Path(str(path) + ".xlsx")
+        overwrite = path.exists()
+        if overwrite and QMessageBox.question(
+            self, self.t("export_list"), self.t("xlsx_replace").format(path),
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No,
+        ) != QMessageBox.Yes:
+            return
+        headers = [self.tree.headerItem().text(c) for c in range(self.tree.columnCount())]
+        rows = []
+        for index in range(self.tree.topLevelItemCount()):
+            branch = self.tree.topLevelItem(index)
+            for child_index in range(branch.childCount()):
+                child = branch.child(child_index)
+                rows.append([child.text(c) for c in range(self.tree.columnCount())])
+        try:
+            write_list_xlsx(path, headers, rows, self.t("branches_mangos"), overwrite=overwrite)
+        except Exception as exc:
+            QMessageBox.warning(self, self.t("export_list"), self.t("xlsx_error").format(exc))
+            return
+        QMessageBox.information(self, self.t("export_list"), self.t("xlsx_saved").format(path))
 
     def export_configs(self) -> None:
         dialog = ExportDialog(

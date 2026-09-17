@@ -3,6 +3,13 @@ from __future__ import annotations
 
 TRANSLATIONS: dict[str, dict[str, str]] = {
     "en": {
+        "oven_subnet_mask": "Oven subnet mask",
+        "oven_gateway": "Oven gateway",
+        "export_list": "Export list (XLSX)",
+        "xlsx_filter": "Excel workbook (*.xlsx)",
+        "xlsx_replace": "Replace the existing file?\n{0}",
+        "xlsx_error": "Could not export the list:\n{0}",
+        "xlsx_saved": "List saved to:\n{0}",
         "app_title": "Mango VPN Manager",
         "app_subtitle": "Branch and OpenVPN configuration workspace",
         "workflow_title": "Setup progress",
@@ -179,6 +186,13 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "phase1_notice": "Exports remain separate. Productive installation and service restart always require explicit confirmation.",
     },
     "de": {
+        "oven_subnet_mask": "Ofen-Subnetzmaske",
+        "oven_gateway": "Ofen-Gateway",
+        "export_list": "Liste exportieren (XLSX)",
+        "xlsx_filter": "Excel-Arbeitsmappe (*.xlsx)",
+        "xlsx_replace": "Vorhandene Datei ersetzen?\n{0}",
+        "xlsx_error": "Die Liste konnte nicht exportiert werden:\n{0}",
+        "xlsx_saved": "Liste gespeichert unter:\n{0}",
         "app_title": "Mango VPN Manager",
         "app_subtitle": "Arbeitsbereich für Filialen und OpenVPN-Konfigurationen",
         "workflow_title": "Einrichtungsfortschritt",
