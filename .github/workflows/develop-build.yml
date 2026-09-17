@@ -1,0 +1,142 @@
+name: Develop Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish a GitHub pre-release (disable for a build-only test)"
+        type: boolean
+        required: true
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: develop-build
+  cancel-in-progress: false
+
+jobs:
+  secret-scan:
+    name: Scan develop history
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    outputs:
+      commit: ${{ steps.source.outputs.commit }}
+    steps:
+      - name: Check out complete develop history
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Record exact source commit
+        id: source
+        run: echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Scan for secrets
+        uses: gitleaks/gitleaks-action@dcedce43c6f43de0b836d1fe38946645c9c638dc # v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    name: Build develop pre-release
+    needs: secret-scan
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out scanned source commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.secret-scan.outputs.commit }}
+          persist-credentials: false
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          if ($LASTEXITCODE -ne 0) { throw "pip upgrade failed." }
+          python -m pip install -r requirements-dev.txt
+          if ($LASTEXITCODE -ne 0) { throw "Dependency installation failed." }
+
+      - name: Run tests
+        shell: pwsh
+        run: python -m pytest -q
+
+      - name: Build Windows application
+        shell: pwsh
+        run: .\build.ps1 -PythonExecutable (Get-Command python).Source
+
+      - name: Verify and package build
+        id: package
+        shell: pwsh
+        run: |
+          .\scripts\assert-release-safe.ps1 -ApplicationDirectory .\dist\MangoVPNManager
+          $tag = "develop-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $archive = "MangoVPNManager-$tag-windows-x64.zip"
+          Compress-Archive -LiteralPath .\dist\MangoVPNManager -DestinationPath $archive
+          $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash *$archive" | Set-Content -LiteralPath "$archive.sha256" -Encoding ascii
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          "archive=$archive" >> $env:GITHUB_OUTPUT
+          "checksum=$archive.sha256" >> $env:GITHUB_OUTPUT
+
+      - name: Upload build for download
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ steps.package.outputs.tag }}-windows-x64
+          path: |
+            ${{ steps.package.outputs.archive }}
+            ${{ steps.package.outputs.checksum }}
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish GitHub pre-release
+        if: inputs.publish
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_COMMIT: ${{ needs.secret-scan.outputs.commit }}
+          TAG: ${{ steps.package.outputs.tag }}
+          ARCHIVE: ${{ steps.package.outputs.archive }}
+          CHECKSUM: ${{ steps.package.outputs.checksum }}
+        run: |
+          $notes = @"
+          Development build from develop at commit $env:SOURCE_COMMIT.
+
+          For testing only; this is not a stable release. The Windows executable is unsigned.
+          Verify the supplied SHA-256 checksum before extracting the archive.
+          "@
+          $notes | Set-Content -LiteralPath release-notes.md -Encoding utf8
+          gh release create $env:TAG $env:ARCHIVE $env:CHECKSUM `
+              --target $env:SOURCE_COMMIT `
+              --prerelease `
+              --latest=false `
+              --title "Mango VPN Manager - Develop build $env:GITHUB_RUN_NUMBER" `
+              --notes-file release-notes.md
+          if ($LASTEXITCODE -ne 0) { throw "Pre-release publication failed." }
+
+      - name: Summarize build
+        shell: pwsh
+        env:
+          SOURCE_COMMIT: ${{ needs.secret-scan.outputs.commit }}
+          TAG: ${{ steps.package.outputs.tag }}
+          PUBLISH: ${{ inputs.publish }}
+        run: |
+          "Source commit: $env:SOURCE_COMMIT" >> $env:GITHUB_STEP_SUMMARY
+          "Download the ZIP and SHA-256 checksum from this run's artifacts (retained for 14 days)." >> $env:GITHUB_STEP_SUMMARY
+          if ($env:PUBLISH -eq "true") {
+              "Pre-release: $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/releases/tag/$env:TAG" >> $env:GITHUB_STEP_SUMMARY
+          } else {
+              "Build-only test: no tag or release was created." >> $env:GITHUB_STEP_SUMMARY
+          }

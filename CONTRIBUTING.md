@@ -16,8 +16,13 @@ UI content in `src/gui/i18n.py`.
 4. Create hotfix branches from `main`, merge them into `main`, and merge the
    same fix back into `develop`.
 
-Do not force-push protected branches. Release tags use semantic versions such
+Do not force-push protected branches. Stable release tags use semantic versions such
 as `v0.1.0` and must point to a commit on `main`.
+
+Development pre-releases are created manually through **Actions > Develop Build**
+with `develop` selected. Their generated `develop-<run ID>-<attempt>` tags point
+to the exact scanned, tested, and built commit. They never replace stable releases.
+Turn off the publish input to verify the build without creating a tag or release.
 
 ## Local verification
 
