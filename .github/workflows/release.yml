@@ -48,7 +48,11 @@ jobs:
 
       - name: Build Windows application
         shell: pwsh
-        run: .\build.ps1 -PythonExecutable (Get-Command python).Source
+        run: .\build.ps1 -PythonExecutable (Get-Command python).Source -ReleaseVersion $env:GITHUB_REF_NAME
+
+      - name: Smoke test packaged updater with synthetic data
+        shell: pwsh
+        run: python scripts/smoke_update.py dist/MangoVPNManager
 
       - name: Verify and package release
         id: package
@@ -71,6 +75,7 @@ jobs:
         run: |
           gh release create $env:GITHUB_REF_NAME $env:ARCHIVE $env:CHECKSUM `
               --verify-tag `
+              --latest `
               --generate-notes `
               --title "Mango VPN Manager $env:GITHUB_REF_NAME" `
               --notes "The Windows executable is currently unsigned. Verify the supplied SHA-256 checksum before extracting the archive."
