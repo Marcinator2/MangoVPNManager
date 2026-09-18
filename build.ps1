@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
     [switch]$Clean,
+    [switch]$Start,
     [string]$PythonExecutable = ""
 )
 
@@ -13,12 +14,44 @@ $buildDir = Join-Path $projectRoot "build"
 $stagingDist = Join-Path $buildDir "dist-staging"
 $targetDist = Join-Path $projectRoot "dist\MangoVPNManager"
 
+if ($Start -and $Clean) {
+    throw "Use -Start to run from source or -Clean to rebuild the EXE, not both."
+}
+
 if ($PythonExecutable) {
     $pythonExe = (Get-Item -LiteralPath $PythonExecutable -ErrorAction Stop).FullName
 } elseif (Test-Path -LiteralPath $venvPython -PathType Leaf) {
     $pythonExe = $venvPython
 } else {
-    throw "Missing .venv. Create it with: py -3.14 -m venv .venv, or pass -PythonExecutable explicitly."
+    if (Test-Path -LiteralPath (Join-Path $projectRoot ".venv")) {
+        throw "The existing .venv is incomplete. Repair it or rename it before retrying."
+    }
+    if (-not (Get-Command py -ErrorAction SilentlyContinue)) {
+        throw "Install Python 3.14 with the Python launcher, then run this script again."
+    }
+    & py -3.14 -c "import sys; sys.exit(0 if sys.version_info[:2] == (3, 14) else 1)"
+    if ($LASTEXITCODE -ne 0) { throw "Install Python 3.14, then run this script again." }
+    Write-Host "Creating the Python 3.14 environment..."
+    & py -3.14 -m venv (Join-Path $projectRoot ".venv")
+    if ($LASTEXITCODE -ne 0) { throw "Could not create .venv." }
+    $pythonExe = $venvPython
+}
+
+& $pythonExe -c "import sys; sys.exit(0 if sys.version_info[:2] == (3, 14) else 1)"
+if ($LASTEXITCODE -ne 0) {
+    throw "The selected environment must use Python 3.14. Repair it or pass -PythonExecutable."
+}
+Write-Host "Checking and installing project dependencies..."
+& $pythonExe -m pip install -r (Join-Path $projectRoot "requirements-dev.txt")
+if ($LASTEXITCODE -ne 0) { throw "Dependency installation failed. Check the pip output above." }
+& $pythonExe -m pip check
+if ($LASTEXITCODE -ne 0) { throw "The Python environment has incompatible dependencies." }
+
+if ($Start) {
+    Write-Host "Starting from source (using the repository data directory)..."
+    & $pythonExe (Join-Path $projectRoot "src\main.py")
+    if ($LASTEXITCODE -ne 0) { throw "Application exited with code $LASTEXITCODE." }
+    return
 }
 
 if ($Clean) {
@@ -26,6 +59,7 @@ if ($Clean) {
 }
 
 & $pythonExe -m PyInstaller `
+    --clean `
     --noconfirm `
     --windowed `
     --name MangoVPNManager `
