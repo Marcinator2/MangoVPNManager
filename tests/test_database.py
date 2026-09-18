@@ -30,6 +30,17 @@ def test_internal_id_is_assigned_automatically(database: Database) -> None:
     assert second.internal_id == 2
 
 
+def test_duplicate_descriptions_are_allowed_on_create_and_update(database: Database) -> None:
+    first = database.add_branch_with_mangos("0001", 1, "Same description")
+    second = database.add_branch_with_mangos("0002", 1, "Same description")
+    database.update_branch(Branch(second.id, "0002", second.internal_id, "Changed"))
+    database.update_branch(Branch(second.id, "0002", second.internal_id, first.description))
+    assert [branch.description for branch in database.list_branches()] == [
+        "Same description", "Same description",
+    ]
+    assert len({mango.vpn_ip for mango in database.list_mangos()}) == 2
+
+
 def test_automatic_internal_id_skips_used_and_reserved_values(database: Database) -> None:
     for internal_id in range(1, 8):
         database.add_branch(f"BRANCH-{internal_id}", internal_id)

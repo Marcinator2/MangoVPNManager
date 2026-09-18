@@ -51,12 +51,14 @@ settings, certificates, keys, exported profiles, or other runtime data.
 ```powershell
 git clone https://github.com/Marcinator2/MangoVPNManager.git
 cd MangoVPNManager
-py -3.14 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements-dev.txt
-python src\main.py
+.\build.ps1 -Start
 ```
+
+The script checks Python 3.14, creates a missing `.venv`, installs development
+dependencies, and runs pip check. Install Python 3.14 with the Python launcher
+first. Existing invalid environments are reported without replacing them.
+`-Start` runs from source instead of building the EXE; omit it to build.
+Do not combine `-Start` with `-Clean`. Environment activation is not required.
 
 Source execution stores SQLite data and settings under the local `data/`
 directory. Packaged execution uses `data/` beside the EXE. Both are ignored.

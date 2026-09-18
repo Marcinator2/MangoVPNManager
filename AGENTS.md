@@ -154,9 +154,13 @@ In the export assistant:
 - Changing host, port, PKI material, or certificates invalidates previously
   stored configuration-created states.
 
+The main list shows description next to name instead of the internal ID.
+Descriptions need not be unique. Branch names have a Mango-count prefix and
+start collapsed; reloads preserve the expanded branches.
 The main list includes oven IP, subnet mask, and gateway. Its separate XLSX
 export includes only Mango rows from all branches (including collapsed entries), uses
-localized headers, preserves text and leading zeroes, and requires confirmation
+localized headers, repeats the parent branch description on each Mango row,
+preserves text and leading zeroes, and requires confirmation
 before replacing a file. It does not change configuration-created statuses.
 
 ## Certificate and PKI behavior
@@ -339,7 +343,7 @@ Run tests:
 
     .\.venv\Scripts\python.exe -m pytest -q
 
-At the time this file was updated, the suite contains 63 passing tests.
+At the time this file was updated, the suite contains 64 passing tests.
 
 For risky Easy-RSA changes, supplement unit tests with a real integration test
 against an automatically deleted temporary PKI. A useful regression sequence
@@ -364,7 +368,11 @@ the full tests, build the EXE, and perform a short startup smoke test.
 
 'build.ps1' must build into a staging directory and update only the packaged
 EXE and '_internal' code directory. It defaults to '.venv' locally and accepts
-an explicit '-PythonExecutable' for CI. It must preserve an existing
+an explicit '-PythonExecutable' for CI. It validates Python 3.14, creates a
+missing local environment, installs requirements-dev.txt, and runs pip check.
+'-Start' prepares the environment and runs from source instead of building;
+it cannot be combined with '-Clean'. Existing invalid environments are not
+replaced automatically. It must preserve an existing
 'dist\MangoVPNManager\data' directory, including on clean builds, and refuse
 deployment while the packaged application is running.
 
@@ -396,4 +404,4 @@ deployment while the packaged application is running.
 - The real temporary-PKI sequence CA → server → two clients succeeds.
 - English public documentation, GitHub CI/release workflows, release-content
   checks, and contribution/security templates are present.
-- The test suite passes with 63 tests.
+- The test suite passes with 64 tests.

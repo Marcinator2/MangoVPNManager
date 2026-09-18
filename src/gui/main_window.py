@@ -74,7 +74,7 @@ class MainWindow(QMainWindow):
     def _build_ui(self) -> None:
         self.tree = QTreeWidget()
         self.tree.setObjectName("mainTree")
-        self.tree.setColumnCount(15)
+        self.tree.setColumnCount(14)
         self.tree.setSelectionMode(QAbstractItemView.SingleSelection)
         self.tree.setAlternatingRowColors(True)
         self.tree.itemDoubleClicked.connect(self._edit_selected)
@@ -263,7 +263,7 @@ class MainWindow(QMainWindow):
         self.tree.setHeaderLabels(
             [
                 self.t("name"),
-                self.t("internal_id"),
+                self.t("description"),
                 self.t("vpn_ip"),
                 self.t("lan_network"),
                 self.t("mango_ip"),
@@ -276,7 +276,6 @@ class MainWindow(QMainWindow):
                 self.t("connected_since"),
                 self.t("remote_ip"),
                 self.t("last_seen"),
-                self.t("description"),
             ]
         )
         self.english_action.setChecked(self.settings.language == "en")
@@ -317,18 +316,23 @@ class MainWindow(QMainWindow):
 
     def reload_tree(self) -> None:
         self._sync_certificate_statuses()
+        expanded_ids = {
+            item.data(0, ROLE_ID)
+            for index in range(self.tree.topLevelItemCount())
+            if (item := self.tree.topLevelItem(index)).isExpanded()
+        }
         self.tree.clear()
         self._mango_items.clear()
         mangos_by_branch: dict[int, list[Mango]] = {}
         for mango in self.database.list_mangos():
             mangos_by_branch.setdefault(mango.branch_id, []).append(mango)
         for branch in self.database.list_branches():
+            branch_mangos = mangos_by_branch.get(branch.id, [])
             branch_item = QTreeWidgetItem(
                 [
-                    branch.branch_number,
-                    str(branch.internal_id),
-                    *([""] * 12),
+                    f"({len(branch_mangos)}) {branch.branch_number}",
                     branch.description,
+                    *([""] * 12),
                 ]
             )
             branch_item.setData(0, ROLE_TYPE, "branch")
@@ -342,7 +346,7 @@ class MainWindow(QMainWindow):
                 font.setBold(True)
                 branch_item.setFont(column, font)
             self.tree.addTopLevelItem(branch_item)
-            for mango in mangos_by_branch.get(branch.id or -1, []):
+            for mango in branch_mangos:
                 mango_item = QTreeWidgetItem(
                     [
                         mango.name,
@@ -359,7 +363,6 @@ class MainWindow(QMainWindow):
                         "",
                         "",
                         self._format_stored_time(mango.last_seen_at),
-                        "",
                     ]
                 )
                 mango_item.setData(0, ROLE_TYPE, "mango")
@@ -383,7 +386,7 @@ class MainWindow(QMainWindow):
                     )
                     mango_item.setTextAlignment(column, Qt.AlignCenter)
                 branch_item.addChild(mango_item)
-            branch_item.setExpanded(True)
+            branch_item.setExpanded(branch.id in expanded_ids)
         for column in range(self.tree.columnCount()):
             self.tree.resizeColumnToContents(column)
         self._update_action_states()
@@ -789,7 +792,9 @@ class MainWindow(QMainWindow):
             branch = self.tree.topLevelItem(index)
             for child_index in range(branch.childCount()):
                 child = branch.child(child_index)
-                rows.append([child.text(c) for c in range(self.tree.columnCount())])
+                row = [child.text(c) for c in range(self.tree.columnCount())]
+                row[1] = branch.text(1)
+                rows.append(row)
         try:
             write_list_xlsx(path, headers, rows, self.t("branches_mangos"), overwrite=overwrite)
         except Exception as exc:
