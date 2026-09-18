@@ -20,6 +20,7 @@ dist/
 *.sha256
 
 # Runtime data
+.mango-update/
 data/
 *.db
 *.db-*

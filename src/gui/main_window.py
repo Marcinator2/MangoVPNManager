@@ -23,6 +23,8 @@ from PySide6.QtWidgets import (
 )
 
 from config.settings import AppSettings, resource_path, save_settings
+from config.version import read_build_info
+from gui.update_controller import UpdateController
 from database.database import Database
 from database.models import Branch, Mango
 from gui.branch_dialog import BranchDialog
@@ -53,6 +55,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.database = database
         self.settings = settings
+        self.build_info = read_build_info()
         self.translator = Translator(settings.language)
         self.runtime = discover_openvpn_runtime(settings.openvpn_root)
         self._mango_items: dict[int, QTreeWidgetItem] = {}
@@ -66,6 +69,7 @@ class MainWindow(QMainWindow):
         self.status_timer.timeout.connect(self._poll_runtime_status)
         self.status_timer.start()
         self._refresh_runtime_status()
+        self.update_controller = UpdateController(self, self.build_info)
 
     @property
     def t(self):
@@ -241,7 +245,9 @@ class MainWindow(QMainWindow):
         self.resize(1250, 700)
 
     def _retranslate(self) -> None:
-        self.setWindowTitle(self.t("app_title"))
+        self.setWindowTitle(f'{self.t("app_title")} — {self.build_info.version}')
+        if hasattr(self, "update_controller"):
+            self.update_controller.retranslate()
         self.brand_title_label.setText(self.t("app_title"))
         self.brand_subtitle_label.setText(self.t("app_subtitle"))
         self.add_branch_button.setText(self.t("add_branch"))
@@ -824,6 +830,9 @@ class MainWindow(QMainWindow):
             self.edit_branch()
 
     def closeEvent(self, event: QCloseEvent) -> None:
+        if hasattr(self, 'update_controller') and not self.update_controller.can_close():
+            event.ignore()
+            return
         if hasattr(self, "status_timer"):
             self.status_timer.stop()
         self.database.close()

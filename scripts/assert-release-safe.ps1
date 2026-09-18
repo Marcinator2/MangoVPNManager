@@ -19,6 +19,23 @@ if (-not (Test-Path -LiteralPath $internalDirectory -PathType Container)) {
     throw "Release directory does not contain the PyInstaller _internal directory."
 }
 
+$updater = Join-Path $application.FullName "MangoVPNUpdater.exe"
+$metadata = Join-Path $internalDirectory "build-info.json"
+if (-not (Test-Path -LiteralPath $updater -PathType Leaf) -or
+    -not (Test-Path -LiteralPath $metadata -PathType Leaf)) {
+    throw "Release directory must contain the updater and build identity."
+}
+$buildInfo = Get-Content -LiteralPath $metadata -Raw | ConvertFrom-Json
+if ($buildInfo.build_type -notin @("stable", "development") -or -not $buildInfo.version -or -not $buildInfo.commit) {
+    throw "Invalid build identity."
+}
+if ($buildInfo.build_type -eq "stable" -and $buildInfo.version -cnotmatch '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') {
+    throw "Invalid stable release version."
+}
+if (Test-Path -LiteralPath (Join-Path $application.FullName ".mango-update")) {
+    throw "Release directory contains local updater state."
+}
+
 $violations = [System.Collections.Generic.List[string]]::new()
 $runtimeData = Join-Path $application.FullName "data"
 if (Test-Path -LiteralPath $runtimeData) {

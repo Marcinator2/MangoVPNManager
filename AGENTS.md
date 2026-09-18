@@ -42,7 +42,11 @@ Never copy, replace, or merge either database automatically.
 
 Primary files:
 
-- 'src/main.py': application entry point.
+- 'src/main.py': application entry point and pre-database update recovery.
+- 'src/config/version.py': embedded stable/development build identity.
+- 'src/updater/': release downloads, package validation, Windows locks, and
+  journaled program replacement through a standalone helper.
+- 'src/gui/update_controller.py': asynchronous update UI and shutdown handoff.
 - 'src/gui/main_window.py': main window, tree, and guided workflow.
 - 'src/gui/certificate_dialog.py': CA, server, and Mango certificate workflow.
 - 'src/gui/export_dialog.py': guided configuration export.
@@ -62,6 +66,7 @@ Primary files:
 - 'build.ps1': Windows packaging script.
 - 'scripts/assert-release-safe.ps1': release-content safety gate.
 - 'scripts/capture_screenshot.py': synthetic documentation screenshot tool.
+- 'scripts/smoke_update.py': packaged updater test using disposable synthetic data.
 - '.github/workflows/': Windows CI, stable tagged releases, and manual develop builds.
 
 ## Public repository hygiene
@@ -273,6 +278,30 @@ Server installation is a separate, explicitly confirmed action:
   not-installed, update-required, current, or unknown state. Disable the
   install action when all generated files already match.
 
+## Application updater
+
+- Only packaged stable builds check for updates automatically, once at startup.
+  The Updates menu also supports manual checks. Source/development builds do not
+  install updates or automatically contact the release service.
+- Accept only newer stable 'vX.Y.Z' GitHub releases from
+  'Marcinator2/MangoVPNManager'. The stable release workflow enforces main
+  ancestry, embeds the tag, and marks the release as latest.
+- Download and installation require the user's Update now action. Use HTTPS,
+  the matching SHA-256 sidecar, bounded downloads, safe archive paths, and a
+  data-free packaged startup check before handing off.
+- Replace only 'MangoVPNManager.exe', '_internal/', and 'MangoVPNUpdater.exe'.
+  Never copy, merge, restore, or migrate user databases as an updater operation.
+  Do not touch PKI, exports, or OpenVPN services.
+- Run the standalone helper from a temporary external copy; use process
+  creation identity and cross-session Windows mutexes before replacement.
+  Never forcibly stop the user's application.
+- Keep an atomic journal and the last program backup under '.mango-update/'.
+  Recover interrupted replacements before opening user data. If the loader is
+  unavailable, the standalone helper supports '--recover <application-folder>'.
+- Refuse linked/junction paths. Missing write access requires restarting the
+  app as administrator; do not elevate automatically.
+- All real update tests must use disposable installations and synthetic data.
+
 ## Live OpenVPN status
 
 - The generated server configuration writes status-version 3 every 5 seconds
@@ -343,7 +372,7 @@ Run tests:
 
     .\.venv\Scripts\python.exe -m pytest -q
 
-At the time this file was updated, the suite contains 64 passing tests.
+At the time this file was updated, the suite contains 139 passing tests.
 
 For risky Easy-RSA changes, supplement unit tests with a real integration test
 against an automatically deleted temporary PKI. A useful regression sequence
@@ -362,19 +391,24 @@ Expected executable:
 
 'dist\MangoVPNManager\MangoVPNManager.exe'
 
-The build must bundle application code and icons only. It must not bundle
+The build must bundle application code, the standalone updater, build identity,
+and icons only. It must not bundle
 'data/', PKI material, exports, or settings. After meaningful changes, run
 the full tests, build the EXE, and perform a short startup smoke test.
 
 'build.ps1' must build into a staging directory and update only the packaged
-EXE and '_internal' code directory. It defaults to '.venv' locally and accepts
+EXE, updater EXE, and '_internal' code directory. It defaults to '.venv' locally and accepts
 an explicit '-PythonExecutable' for CI. It validates Python 3.14, creates a
 missing local environment, installs requirements-dev.txt, and runs pip check.
 '-Start' prepares the environment and runs from source instead of building;
-it cannot be combined with '-Clean'. Existing invalid environments are not
+it cannot be combined with '-Clean' or '-StagingOnly'. Existing invalid environments are not
 replaced automatically. It must preserve an existing
 'dist\MangoVPNManager\data' directory, including on clean builds, and refuse
-deployment while the packaged application is running.
+deployment while the packaged application is running. '-StagingOnly' builds to
+'build/package-staging/MangoVPNManager' without replacing the installed copy.
+'-ReleaseVersion vX.Y.Z' embeds a stable identity; other builds are development
+builds. CI runs 'python scripts/smoke_update.py dist/MangoVPNManager' after
+building; local staging verification passes the staging directory instead.
 
 ## Maintaining this file
 
@@ -383,7 +417,7 @@ deployment while the packaged application is running.
   verified-state summary inaccurate. Keep it concise and do not record
   transient implementation details.
 
-## Current verified state (2026-09-16)
+## Current verified state (2026-09-19)
 
 - Python 3.14 application and PyInstaller build work.
 - Light/dark themes and bilingual UI work.
@@ -404,4 +438,7 @@ deployment while the packaged application is running.
 - The real temporary-PKI sequence CA → server → two clients succeeds.
 - English public documentation, GitHub CI/release workflows, release-content
   checks, and contribution/security templates are present.
-- The test suite passes with 64 tests.
+- Stable-release updater, data-free startup validation, external helper,
+  interrupted-transaction recovery, and preserved-data update smoke test work.
+- The Windows staging build and release-content safety check pass.
+- The test suite passes with 139 tests.

@@ -2,7 +2,9 @@
 param(
     [switch]$Clean,
     [switch]$Start,
-    [string]$PythonExecutable = ""
+    [switch]$StagingOnly,
+    [string]$PythonExecutable = "",
+    [string]$ReleaseVersion = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -11,11 +13,11 @@ $venvPython = Join-Path $projectRoot ".venv\Scripts\python.exe"
 $iconFile = Join-Path $projectRoot "icons\mb-soft.ico"
 $iconData = "$(Join-Path $projectRoot 'icons');icons"
 $buildDir = Join-Path $projectRoot "build"
-$stagingDist = Join-Path $buildDir "dist-staging"
+$stagingDist = Join-Path $buildDir "package-staging"
 $targetDist = Join-Path $projectRoot "dist\MangoVPNManager"
 
-if ($Start -and $Clean) {
-    throw "Use -Start to run from source or -Clean to rebuild the EXE, not both."
+if ($Start -and ($Clean -or $StagingOnly)) {
+    throw "Use -Start to run from source; it cannot be combined with -Clean or -StagingOnly."
 }
 
 if ($PythonExecutable) {
@@ -58,6 +60,35 @@ if ($Clean) {
     if (Test-Path -LiteralPath $buildDir) { Remove-Item -LiteralPath $buildDir -Recurse -Force }
 }
 
+$metadataDir = Join-Path $buildDir "metadata"
+New-Item -ItemType Directory -Path $metadataDir -Force | Out-Null
+$buildType = "development"
+$version = "development"
+if ($ReleaseVersion) {
+    if ($ReleaseVersion -cnotmatch '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') {
+        throw "ReleaseVersion must be a stable vX.Y.Z tag."
+    }
+    $buildType = "stable"
+    $version = $ReleaseVersion
+}
+$commit = (& git -C $projectRoot rev-parse HEAD 2>$null)
+if ($LASTEXITCODE -ne 0) { $commit = "unknown" }
+$metadataFile = Join-Path $metadataDir "build-info.json"
+@{ version = $version; build_type = $buildType; commit = "$commit" } |
+    ConvertTo-Json | Set-Content -LiteralPath $metadataFile -Encoding utf8
+
+# The independent helper can replace Qt and Python DLLs from a temporary copy.
+& $pythonExe -m PyInstaller `
+    --clean --noconfirm --onefile --windowed `
+    --name MangoVPNUpdater `
+    --icon $iconFile `
+    --paths (Join-Path $projectRoot "src") `
+    --distpath (Join-Path $buildDir "helper-staging") `
+    --workpath (Join-Path $buildDir "helper-work") `
+    --specpath $buildDir `
+    (Join-Path $projectRoot "src\updater\helper.py")
+if ($LASTEXITCODE -ne 0) { throw "Updater build failed." }
+
 & $pythonExe -m PyInstaller `
     --clean `
     --noconfirm `
@@ -65,9 +96,10 @@ if ($Clean) {
     --name MangoVPNManager `
     --icon $iconFile `
     --add-data $iconData `
+    --add-data "$metadataFile;." `
     --paths (Join-Path $projectRoot "src") `
     --distpath $stagingDist `
-    --workpath $buildDir `
+    --workpath (Join-Path $buildDir "application-work") `
     --specpath $buildDir `
     (Join-Path $projectRoot "src\main.py")
 
@@ -78,11 +110,18 @@ if ($LASTEXITCODE -ne 0) {
 $stagedApp = Join-Path $stagingDist "MangoVPNManager"
 $stagedExe = Join-Path $stagedApp "MangoVPNManager.exe"
 $stagedInternal = Join-Path $stagedApp "_internal"
+$stagedUpdater = Join-Path $stagedApp "MangoVPNUpdater.exe"
+Copy-Item -LiteralPath (Join-Path $buildDir "helper-staging\MangoVPNUpdater.exe") -Destination $stagedUpdater
 if (-not (Test-Path -LiteralPath $stagedExe) -or -not (Test-Path -LiteralPath $stagedInternal)) {
     throw "Staged PyInstaller output is incomplete."
 }
 
-$runningApp = Get-Process -Name "MangoVPNManager" -ErrorAction SilentlyContinue |
+if ($StagingOnly) {
+    Write-Host "Build complete (deployment skipped): $stagedApp"
+    return
+}
+
+$runningApp = Get-Process -Name "MangoVPNManager", "MangoVPNUpdater" -ErrorAction SilentlyContinue |
     Where-Object { $_.Path -and $_.Path.StartsWith($targetDist, [System.StringComparison]::OrdinalIgnoreCase) }
 if ($runningApp) {
     throw "MangoVPNManager is running from the target directory. Close it before updating the build."
@@ -97,12 +136,14 @@ if (-not $resolvedTarget.StartsWith("$resolvedProject\dist\", [System.StringComp
 
 $targetExe = Join-Path $targetDist "MangoVPNManager.exe"
 $targetInternal = Join-Path $targetDist "_internal"
+$targetUpdater = Join-Path $targetDist "MangoVPNUpdater.exe"
 if (Test-Path -LiteralPath $targetExe) {
     Remove-Item -LiteralPath $targetExe -Force
 }
 if (Test-Path -LiteralPath $targetInternal) {
     Remove-Item -LiteralPath $targetInternal -Recurse -Force
 }
+Copy-Item -LiteralPath $stagedUpdater -Destination $targetUpdater -Force
 Copy-Item -LiteralPath $stagedExe -Destination $targetExe
 Copy-Item -LiteralPath $stagedInternal -Destination $targetInternal -Recurse
 

@@ -77,6 +77,10 @@ jobs:
         shell: pwsh
         run: .\build.ps1 -PythonExecutable (Get-Command python).Source
 
+      - name: Smoke test packaged updater with synthetic data
+        shell: pwsh
+        run: python scripts/smoke_update.py dist/MangoVPNManager
+
       - name: Verify and package build
         id: package
         shell: pwsh

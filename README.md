@@ -21,6 +21,7 @@ live connection status. It is published by the unregistered **mb-soft** project.
 - Compare and explicitly install the complete server configuration.
 - Monitor OpenVPN and display live Mango connection information.
 - Use English or German UI text and light or dark themes.
+- Check for stable releases and install verified updates after confirmation.
 
 ## Requirements
 
@@ -46,6 +47,56 @@ Get-Content .\MangoVPNManager-v0.1.0-windows-x64.zip.sha256
 The hashes must match exactly. Release archives never contain a database,
 settings, certificates, keys, exported profiles, or other runtime data.
 
+## Application updates
+
+Packaged stable releases check GitHub once after startup. Use **Updates > Check
+for updates** to check again. **Update now** downloads the newer stable release,
+verifies its SHA-256 checksum and archive layout, tests startup without opening
+user data, then closes and restarts the application. **Later** leaves the
+installed version unchanged. Downloads and preparation can be cancelled.
+Develop pre-releases and source builds do not install or automatically check
+for updates. Versions without an updater need one manual upgrade first.
+
+The updater replaces only `MangoVPNManager.exe`, `_internal/`, and
+`MangoVPNUpdater.exe`. It preserves `data/`, settings, databases, PKI, exports,
+and other files outside those managed program entries. It never controls
+OpenVPN services. Close other application instances before updating. If the
+installation folder is protected, restart the application as administrator;
+the updater does not request elevation itself. Preparation requires approximately
+3 GiB plus the download size of free space. ZIP downloads are limited to
+512 MiB and extracted packages to 1.5 GiB.
+
+Updates use the public GitHub release feed without credentials. The release
+workflow verifies that stable tags belong to `main`. HTTPS and SHA-256 protect
+transport and download integrity; the binaries remain unsigned and the checksum
+is not an independent publisher signature.
+
+### Recovery
+
+The updater records its transaction under `.mango-update/` and retains the last
+program backup under `.mango-update/<transaction-id>/backup/`. Replacement
+failures restore the previous program files. Interrupted replacements are
+recovered before the next normal startup opens the database.
+
+If an interruption left the EXE or its runtime temporarily unavailable, close
+all instances and run the standalone helper from the installation directory:
+
+```powershell
+.\MangoVPNUpdater.exe --recover (Get-Location).Path
+```
+
+If that helper is also missing, run the copy in the transaction's `backup/`
+directory with `--recover` and the absolute installation directory. The helper
+copies itself outside the installation before restoring files. Do not delete
+the transaction directory until recovery succeeds.
+
+The latest backup also permits manual restoration of the three managed program
+entries after a later startup problem. Close the application first and retain
+the failed program files separately. Never replace or merge `data/` as part of
+program recovery. Recovery does not undo database changes made by a later
+application version; future schema changes must account for that compatibility
+boundary.
+
 ## Development setup
 
 ```powershell
@@ -58,7 +109,7 @@ The script checks Python 3.14, creates a missing `.venv`, installs development
 dependencies, and runs pip check. Install Python 3.14 with the Python launcher
 first. Existing invalid environments are reported without replacing them.
 `-Start` runs from source instead of building the EXE; omit it to build.
-Do not combine `-Start` with `-Clean`. Environment activation is not required.
+Do not combine `-Start` with `-Clean` or `-StagingOnly`. Environment activation is not required.
 
 Source execution stores SQLite data and settings under the local `data/`
 directory. Packaged execution uses `data/` beside the EXE. Both are ignored.
@@ -69,10 +120,19 @@ directory. Packaged execution uses `data/` beside the EXE. Both are ignored.
 .\.venv\Scripts\python.exe -m pytest -q
 .\build.ps1
 .\scripts\assert-release-safe.ps1 -ApplicationDirectory .\dist\MangoVPNManager
+.\.venv\Scripts\python.exe scripts\smoke_update.py dist\MangoVPNManager
 ```
 
 CI may pass an already provisioned interpreter explicitly with
-`-PythonExecutable`; local builds default to `.venv`.
+`-PythonExecutable`; local builds default to `.venv`. Stable release CI passes
+`-ReleaseVersion vX.Y.Z`; builds without this parameter are development builds.
+The embedded identity includes version, build type, and source commit.
+
+Use `-StagingOnly` to build without replacing an existing packaged installation.
+Its output is `build/package-staging/MangoVPNManager`; pass that directory to
+the safety check and smoke test instead. The smoke test uses temporary program
+copies and synthetic data, tests the real helper, and cleans up its own test
+processes and files. It does not download a release or use the live PKI.
 
 The build script preserves an existing packaged `data/` directory. The safety
 check therefore intentionally rejects a local release folder containing data.
