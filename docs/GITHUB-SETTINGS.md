@@ -6,7 +6,7 @@ repository and after its first successful CI run.
 ## General
 
 - Visibility: Public
-- Default branch: `develop`
+- Default branch: `main`
 - Issues: Enabled
 - Private vulnerability reporting: Enabled
 - Actions workflow permissions: Read repository contents by default
@@ -49,7 +49,7 @@ into `main`.
 Use **Actions > Release > Run workflow**, select **main**, and enter a new
 semantic version. The publish checkbox controls whether the run creates the
 tag and release or only produces downloadable build artifacts. The workflow
-must also remain on the default branch (`develop`) for manual dispatch.
+must remain on the default branch (`main`) for manual dispatch.
 
 No additional secret or branch protection bypass is required. The release job
 uses its repository-scoped `GITHUB_TOKEN` to create a new annotated tag and the
