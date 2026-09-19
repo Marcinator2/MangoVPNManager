@@ -20,11 +20,11 @@ from updater.release import Cancelled, ReleaseClient, SafeRedirect, UpdateError,
 
 
 def release_payload(tag="v1.10.0"):
-    name = f"MangoVPNManager-{tag}-windows-x64.zip"
+    name = f"OpenVPNManager-{tag}-windows-x64.zip"
     return {
         "tag_name": tag, "draft": False, "prerelease": False,
         "assets": [{"name": asset, "size": 100, "state": "uploaded",
-                    "browser_download_url": f"https://github.com/Marcinator2/MangoVPNManager/releases/download/{tag}/{asset}"}
+                    "browser_download_url": f"https://github.com/Marcinator2/OpenVPN-Manager/releases/download/{tag}/{asset}"}
                    for asset in (name, name + ".sha256")],
     }
 
@@ -37,12 +37,12 @@ def mock_client(payload):
 
 def make_archive(path, version="v1.10.0", extra=None):
     with zipfile.ZipFile(path, "w") as archive:
-        archive.writestr("MangoVPNManager/MangoVPNManager.exe", b"synthetic program")
-        archive.writestr("MangoVPNManager/MangoVPNUpdater.exe", b"synthetic helper")
-        archive.writestr("MangoVPNManager/_internal/build-info.json", json.dumps({
+        archive.writestr("OpenVPNManager/OpenVPNManager.exe", b"synthetic program")
+        archive.writestr("OpenVPNManager/OpenVPNUpdater.exe", b"synthetic helper")
+        archive.writestr("OpenVPNManager/_internal/build-info.json", json.dumps({
             "version": version, "build_type": "stable", "commit": "synthetic",
         }))
-        archive.writestr("MangoVPNManager/_internal/runtime.dll", b"synthetic runtime")
+        archive.writestr("OpenVPNManager/_internal/runtime.dll", b"synthetic runtime")
         if extra:
             for name, data in extra:
                 archive.writestr(name, data)
@@ -168,14 +168,14 @@ def test_checksum_and_extraction(tmp_path):
 
 
 @pytest.mark.parametrize("entry", [
-    "MangoVPNManager/../escape", "MangoVPNManager/_internal/../../escape",
-    "/MangoVPNManager/_internal/a", "C:/escape", "MangoVPNManager\\_internal\\a",
-    "MangoVPNManager/_internal/nul.txt", "MangoVPNManager/_internal/COM1",
-    "MangoVPNManager/_internal/evil:stream", "MangoVPNManager/_internal/a.",
-    "MangoVPNManager/_internal/a ", "MangoVPNManager/_internal//a",
-    "MangoVPNManager/data/settings.json", "MangoVPNManager/_internal/client.key",
-    "MangoVPNManager/_internal/BUILD-INFO.JSON",
-    "MangoVPNManager/extra.exe", "MangoVPNManager/_internal/foo\u0000bar",
+    "OpenVPNManager/../escape", "OpenVPNManager/_internal/../../escape",
+    "/OpenVPNManager/_internal/a", "C:/escape", "OpenVPNManager\\_internal\\a",
+    "OpenVPNManager/_internal/nul.txt", "OpenVPNManager/_internal/COM1",
+    "OpenVPNManager/_internal/evil:stream", "OpenVPNManager/_internal/a.",
+    "OpenVPNManager/_internal/a ", "OpenVPNManager/_internal//a",
+    "OpenVPNManager/data/settings.json", "OpenVPNManager/_internal/client.key",
+    "OpenVPNManager/_internal/BUILD-INFO.JSON",
+    "OpenVPNManager/extra.exe", "OpenVPNManager/_internal/foo\u0000bar",
 ])
 def test_hostile_archive_never_extracts(tmp_path, entry):
     # zipfile normalizes Windows separators and truncates NULs when writing.
@@ -191,11 +191,11 @@ def test_hostile_archive_never_extracts(tmp_path, entry):
 
 
 def test_link_and_file_directory_conflicts(tmp_path):
-    link = zipfile.ZipInfo("MangoVPNManager/_internal/link")
+    link = zipfile.ZipInfo("OpenVPNManager/_internal/link")
     link.create_system = 3
     link.external_attr = (stat.S_IFLNK | 0o777) << 16
     for index, extra in enumerate([[(link, "target")], [
-        ("MangoVPNManager/_internal/a", "file"), ("MangoVPNManager/_internal/a/b", "child"),
+        ("OpenVPNManager/_internal/a", "file"), ("OpenVPNManager/_internal/a/b", "child"),
     ]]):
         path = make_archive(tmp_path / f"{index}.zip", extra=extra)
         with zipfile.ZipFile(path) as archive:
@@ -206,7 +206,7 @@ def test_link_and_file_directory_conflicts(tmp_path):
 def test_incomplete_or_wrong_version_package(tmp_path):
     path = tmp_path / "empty.zip"
     with zipfile.ZipFile(path, "w") as archive:
-        archive.writestr("MangoVPNManager/MangoVPNManager.exe", "incomplete")
+        archive.writestr("OpenVPNManager/OpenVPNManager.exe", "incomplete")
     with pytest.raises(UpdateError):
         extract_package(path, tmp_path / "missing", "v1.0.0", threading.Event())
     path = make_archive(tmp_path / "wrong.zip")
@@ -300,7 +300,7 @@ def test_preflight_permissions_and_space(tmp_path, monkeypatch):
     monkeypatch.setattr(transaction.shutil, "disk_usage", lambda _: SimpleNamespace(free=1000))
     mkdir = Path.mkdir
     def fail(self, *args, **kwargs):
-        if self.name.startswith(".mango-write-"):
+        if self.name.startswith(".openvpn-manager-write-"):
             raise PermissionError("not writable")
         return mkdir(self, *args, **kwargs)
     monkeypatch.setattr(Path, "mkdir", fail)
@@ -387,7 +387,7 @@ def helper_fixture(tmp_path, monkeypatch):
     archive = make_archive(operation / "download.zip")
     digest = hashlib.sha256(archive.read_bytes()).hexdigest()
     (operation / "checksum.txt").write_text(
-        f"{digest} *MangoVPNManager-v1.10.0-windows-x64.zip\n")
+        f"{digest} *OpenVPNManager-v1.10.0-windows-x64.zip\n")
     transaction.write_json(operation / "job.json", {
         "protocol": 1, "root": str(root), "id": operation.name,
         "version": "v1.10.0", "pid": 1, "creation": 1,

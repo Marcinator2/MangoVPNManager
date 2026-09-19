@@ -1,6 +1,6 @@
 # GitHub repository settings
 
-Apply these settings after creating the public `Marcinator2/MangoVPNManager`
+Apply these settings after creating the public `Marcinator2/OpenVPN-Manager`
 repository and after its first successful CI run.
 
 ## General

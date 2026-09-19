@@ -10,16 +10,16 @@ if (-not $application.PSIsContainer) {
     throw "ApplicationDirectory must be a directory: $ApplicationDirectory"
 }
 
-$executable = Join-Path $application.FullName "MangoVPNManager.exe"
+$executable = Join-Path $application.FullName "OpenVPNManager.exe"
 $internalDirectory = Join-Path $application.FullName "_internal"
 if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) {
-    throw "Release directory does not contain MangoVPNManager.exe."
+    throw "Release directory does not contain OpenVPNManager.exe."
 }
 if (-not (Test-Path -LiteralPath $internalDirectory -PathType Container)) {
     throw "Release directory does not contain the PyInstaller _internal directory."
 }
 
-$updater = Join-Path $application.FullName "MangoVPNUpdater.exe"
+$updater = Join-Path $application.FullName "OpenVPNUpdater.exe"
 $metadata = Join-Path $internalDirectory "build-info.json"
 if (-not (Test-Path -LiteralPath $updater -PathType Leaf) -or
     -not (Test-Path -LiteralPath $metadata -PathType Leaf)) {
@@ -32,7 +32,7 @@ if ($buildInfo.build_type -notin @("stable", "development") -or -not $buildInfo.
 if ($buildInfo.build_type -eq "stable" -and $buildInfo.version -cnotmatch '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') {
     throw "Invalid stable release version."
 }
-if (Test-Path -LiteralPath (Join-Path $application.FullName ".mango-update")) {
+if (Test-Path -LiteralPath (Join-Path $application.FullName ".openvpn-manager-update")) {
     throw "Release directory contains local updater state."
 }
 

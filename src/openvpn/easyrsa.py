@@ -13,7 +13,7 @@ from typing import Callable
 
 DEFAULT_OPENVPN_ROOT = Path(r"C:\Program Files\OpenVPN")
 DEFAULT_EASYRSA_ROOT = DEFAULT_OPENVPN_ROOT / "easy-rsa"
-DEFAULT_PKI_PATH = Path(r"C:\ProgramData\MangoVPNManager\pki")
+DEFAULT_PKI_PATH = Path(r"C:\ProgramData\OpenVPNManager\pki")
 OPENVPN_SERVICE_ACCOUNT = r"NT SERVICE\OpenVPNService"
 _SAFE_COMMON_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$")
 
@@ -157,7 +157,7 @@ class EasyRSAService:
 
     def initialize_ca(
         self,
-        common_name: str = "MangoVPNManager-CA",
+        common_name: str = "OpenVPNManager-CA",
         validity_days: int = 3650,
     ) -> EasyRSAResult:
         common_name = validate_common_name(common_name)

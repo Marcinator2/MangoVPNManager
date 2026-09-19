@@ -64,7 +64,7 @@ def smoke_update(source: Path) -> None:
     environment["NO_PROXY"] = ""
     os.environ.update({key: environment[key] for key in (
         "QT_QPA_PLATFORM", "HTTPS_PROXY", "HTTP_PROXY", "NO_PROXY")})
-    with tempfile.TemporaryDirectory(prefix="MangoVPNManager-update-smoke-") as directory:
+    with tempfile.TemporaryDirectory(prefix="OpenVPNManager-update-smoke-") as directory:
         temporary = Path(directory)
         root = temporary / "Application with spaces"
         root.mkdir()
@@ -80,17 +80,17 @@ def smoke_update(source: Path) -> None:
         database.add_branch_with_mangos("0004", 1, "Synthetic smoke test")
         database.close()
         # The real app uses this name, so the restart opens only synthetic data.
-        (root / "data" / "test.db").rename(root / "data" / "mango_vpn_manager.db")
+        (root / "data" / "test.db").rename(root / "data" / "openvpn_manager.db")
         save_settings(AppSettings(pki_path=temporary / "pki",
                                   openvpn_root=temporary / "OpenVPN",
                                   easyrsa_root=temporary / "EasyRSA"),
                       root / "data" / "settings.json")
         (root / "keep.txt").write_bytes(b"unmanaged synthetic content")
         preserved = {path: path.read_bytes() for path in [
-            root / "data" / "mango_vpn_manager.db", root / "data" / "settings.json", root / "keep.txt",
+            root / "data" / "openvpn_manager.db", root / "data" / "settings.json", root / "keep.txt",
         ]}
         operation = create_operation(root)
-        name = "MangoVPNManager-v1.1.0-windows-x64.zip"
+        name = "OpenVPNManager-v1.1.0-windows-x64.zip"
         archive_path = operation / "download.zip"
         with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
             for managed in MANAGED:
@@ -99,7 +99,7 @@ def smoke_update(source: Path) -> None:
                 for path in entries:
                     if not path.is_file():
                         continue
-                    archive_name = "MangoVPNManager/" + path.relative_to(root).as_posix()
+                    archive_name = "OpenVPNManager/" + path.relative_to(root).as_posix()
                     if path == metadata:
                         archive.writestr(archive_name, json.dumps({**old_info, "version": "v1.1.0"}))
                     else:
