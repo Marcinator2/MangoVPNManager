@@ -6,11 +6,8 @@ from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
     QDialogButtonBox,
-    QFormLayout,
     QHBoxLayout,
-    QLabel,
     QMessageBox,
-    QPushButton,
     QSizePolicy,
     QTextEdit,
     QVBoxLayout,
@@ -20,12 +17,10 @@ from config.settings import AppSettings
 from database.database import Database
 from database.models import Mango
 from gui.certificate_operations import CertificateOperationsMixin
+from gui.plain_text import PlainFormLayout as QFormLayout, PlainLabel as QLabel, message_text
 from gui.sizing import button_row_fits, resize_dialog_to_content
-from openvpn.easyrsa import (
-    EasyRSAError,
-    EasyRSAPaths,
-    EasyRSAService,
-)
+from gui.wrapping_button import WrappingButton as QPushButton
+from openvpn.easyrsa import EasyRSAError, EasyRSAPaths, EasyRSAService
 
 
 class CertificateDialog(CertificateOperationsMixin, QDialog):
@@ -135,13 +130,6 @@ class CertificateDialog(CertificateOperationsMixin, QDialog):
         maintenance_layout.addWidget(self.reset_button)
         maintenance_layout.addWidget(self.initialize_button)
 
-        for button in (
-            self.create_server_button,
-            self.create_button,
-            self.create_all_button,
-        ):
-            button.setMinimumWidth(button.sizeHint().width())
-
         certificate_layout = QVBoxLayout()
         certificate_layout.setSpacing(8)
         server_action_row = QHBoxLayout()
@@ -156,8 +144,8 @@ class CertificateDialog(CertificateOperationsMixin, QDialog):
             else 1000
         )
         mango_button_widths = [
-            self.create_button.minimumWidth(),
-            self.create_all_button.minimumWidth(),
+            self.create_button.sizeHint().width(),
+            self.create_all_button.sizeHint().width(),
         ]
         if button_row_fits(mango_button_widths, available_action_width):
             mango_action_layout = QHBoxLayout()
@@ -279,9 +267,7 @@ class CertificateDialog(CertificateOperationsMixin, QDialog):
         elif not server_material.complete:
             guidance = self._t("certificate_next_server")
         elif missing_mangos:
-            guidance = self._t("certificate_next_mangos").format(
-                len(missing_mangos)
-            )
+            guidance = self._t("certificate_next_mangos", len(missing_mangos))
         else:
             guidance = self._t("certificate_all_ready")
         self.guidance_label.setText(guidance)
@@ -291,7 +277,7 @@ class CertificateDialog(CertificateOperationsMixin, QDialog):
         try:
             result = operation()
         except EasyRSAError as exc:
-            QMessageBox.critical(self, self._t("certificate_error"), str(exc))
+            QMessageBox.critical(self, self._t("certificate_error"), message_text(self._t.error(exc)))
             self.refresh()
             return
         finally:

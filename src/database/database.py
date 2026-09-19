@@ -78,7 +78,7 @@ class Database:
         for internal_id in range(MIN_INTERNAL_ID, MAX_INTERNAL_ID + 1):
             if internal_id not in used and internal_id not in RESERVED_INTERNAL_IDS:
                 return internal_id
-        raise ValidationError("No free internal branch ID is available.")
+        raise ValidationError('No free internal location ID is available.', translation_key='validation_no_free_id')
 
     def add_branch(
         self,
@@ -101,7 +101,7 @@ class Database:
         internal_id: int | None = None,
     ) -> Branch:
         if not 0 <= mango_count <= MAX_MANGO_NUMBER:
-            raise ValidationError("Number of Mangos must be between 0 and 10.")
+            raise ValidationError('Number of Routers must be between 0 and 10.', translation_key='validation_router_count')
         branch_number = validate_branch_number(branch_number)
         if internal_id is None:
             internal_id = self.next_available_internal_id()
@@ -132,12 +132,12 @@ class Database:
                         ),
                     )
         except sqlite3.IntegrityError as exc:
-            raise ValidationError("Branch, Mango names, and addresses must be unique.") from exc
+            raise ValidationError('Location, Router names, and addresses must be unique.', translation_key='validation_unique') from exc
         return Branch(branch_id, branch_number, internal_id, description)
 
     def update_branch(self, branch: Branch) -> None:
         if branch.id is None:
-            raise ValidationError("Cannot update a branch without an ID.")
+            raise ValidationError('Cannot update a location without an ID.', translation_key='validation_location_id')
         branch_number = validate_branch_number(branch.branch_number)
         internal_id = validate_internal_id(branch.internal_id)
         mangos = self.connection.execute(
@@ -150,7 +150,7 @@ class Database:
                     (branch_number, internal_id, branch.description.strip(), branch.id),
                 )
                 if self.connection.execute("SELECT changes()").fetchone()[0] == 0:
-                    raise ValidationError("Branch no longer exists.")
+                    raise ValidationError('Location no longer exists.', translation_key='validation_location_missing')
                 for mango in mangos:
                     values = calculate_addresses(branch_number, internal_id, mango["mango_number"])
                     self.connection.execute(
@@ -166,7 +166,7 @@ class Database:
                         ),
                     )
         except sqlite3.IntegrityError as exc:
-            raise ValidationError("The changed branch would create duplicate names or addresses.") from exc
+            raise ValidationError('The changed location would create duplicate names or addresses.', translation_key='validation_location_duplicate') from exc
 
     def delete_branch(self, branch_id: int) -> None:
         with self.connection:
@@ -193,7 +193,7 @@ class Database:
             "SELECT branch_number, internal_id FROM branches WHERE id = ?", (branch_id,)
         ).fetchone()
         if branch is None:
-            raise ValidationError("Selected branch no longer exists.")
+            raise ValidationError('Selected location no longer exists.', translation_key='validation_location_missing')
         values = calculate_addresses(branch["branch_number"], branch["internal_id"], mango_number)
         try:
             cursor = self.connection.execute(
@@ -212,7 +212,7 @@ class Database:
             )
             self.connection.commit()
         except sqlite3.IntegrityError as exc:
-            raise ValidationError("This Mango or one of its calculated addresses already exists.") from exc
+            raise ValidationError('This Router or one of its calculated addresses already exists.', translation_key='validation_router_duplicate') from exc
         return Mango(
             cursor.lastrowid,
             branch_id,
@@ -229,7 +229,7 @@ class Database:
             "SELECT branch_number, internal_id FROM branches WHERE id = ?", (branch_id,)
         ).fetchone()
         if branch is None:
-            raise ValidationError("Selected branch no longer exists.")
+            raise ValidationError('Selected location no longer exists.', translation_key='validation_location_missing')
         values = calculate_addresses(branch["branch_number"], branch["internal_id"], mango_number)
         try:
             with self.connection:
@@ -249,7 +249,7 @@ class Database:
                     ),
                 )
         except sqlite3.IntegrityError as exc:
-            raise ValidationError("This Mango or one of its calculated addresses already exists.") from exc
+            raise ValidationError('This Router or one of its calculated addresses already exists.', translation_key='validation_router_duplicate') from exc
 
     def delete_mango(self, mango_id: int) -> None:
         with self.connection:

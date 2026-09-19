@@ -20,7 +20,7 @@ PRIVATE_KEY = "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----"
 
 
 def _ready_bundle(tmp_path: Path):
-    mango = Mango(1, 1, 1, "0004_Mango1", "10.8.4.1", "10.4.1.0/24", "10.4.1.1", "10.4.1.101")
+    mango = Mango(1, 1, 1, "0004_Router1", "10.8.4.1", "10.4.1.0/24", "10.4.1.1", "10.4.1.101")
     pki = tmp_path / "pki"
     (pki / "issued").mkdir(parents=True)
     (pki / "private").mkdir()
@@ -49,7 +49,7 @@ def test_install_writes_only_server_and_ccd_and_backs_up_existing(tmp_path: Path
 
     assert {path.relative_to(config_dir).as_posix() for path in written} == {
         "server.ovpn",
-        "ccd/0004_Mango1",
+        "ccd/0004_Router1",
     }
     assert not (config_dir / "clients").exists()
     backups = list((config_dir.parent / "OpenVPNManager-backups").rglob("server.ovpn"))
@@ -123,7 +123,7 @@ def test_acl_failure_rolls_back_replaced_server_file(tmp_path: Path) -> None:
 
 
 def test_install_refuses_incomplete_bundle(tmp_path: Path) -> None:
-    mango = Mango(1, 1, 1, "0004_Mango1", "10.8.4.1", "10.4.1.0/24", "10.4.1.1", "10.4.1.101")
+    mango = Mango(1, 1, 1, "0004_Router1", "10.8.4.1", "10.4.1.0/24", "10.4.1.1", "10.4.1.101")
     bundle = build_export_bundle([mango])
     target = tmp_path / "OpenVPN" / "config-auto"
     target.parent.mkdir()

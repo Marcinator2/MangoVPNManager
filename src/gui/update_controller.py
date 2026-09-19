@@ -1,16 +1,25 @@
 """Asynchronous update checks and explicit, cancellable installation."""
 from __future__ import annotations
 
-from pathlib import Path
 import shutil
 import threading
 
-from PySide6.QtCore import QObject, QThread, QTimer, Qt, QUrl, Signal
+from pathlib import Path
+
+from PySide6.QtCore import QObject, QThread, QTimer, QUrl, Qt, Signal
 from PySide6.QtGui import QAction, QDesktopServices
-from PySide6.QtWidgets import QApplication, QDialog, QLabel, QMessageBox, QProgressDialog, QPushButton, QVBoxLayout
+from PySide6.QtWidgets import (
+    QApplication,
+    QDialog,
+    QMessageBox,
+    QProgressDialog,
+    QPushButton,
+    QVBoxLayout,
+)
 
 from config.settings import application_root, save_settings
 from config.version import BuildInfo
+from gui.plain_text import PlainLabel as QLabel, message_text
 from gui.sizing import resize_dialog_to_content
 from updater.release import Release, ReleaseClient, UpdateError
 from updater.service import cleanup_helper, prepare, start_helper
@@ -43,7 +52,7 @@ class UpdateOffer(QDialog):
         self.setWindowTitle(t("update_title"))
         self.setWindowModality(Qt.WindowModal)
         layout = QVBoxLayout(self)
-        label = QLabel(t("update_available").format(current, release.version))
+        label = QLabel(t("update_available", current, release.version))
         label.setWordWrap(True)
         label.setTextFormat(Qt.PlainText)
         layout.addWidget(label)
@@ -117,7 +126,7 @@ class UpdateController(QObject):
             return
         if not self.info.update_enabled:
             if manual:
-                QMessageBox.information(self.window, self.window.t("update_title"), self.window.t("update_development"))
+                QMessageBox.information(self.window, self.window.t("update_title"), message_text(self.window.t("update_development")))
             return
         self.manual = manual
         self.mode = "check"
@@ -165,7 +174,7 @@ class UpdateController(QObject):
             if result is None:
                 self.window.statusBar().showMessage(self.window.t("update_current"), 15000)
                 if self.manual:
-                    QMessageBox.information(self.window, self.window.t("update_title"), self.window.t("update_current"))
+                    QMessageBox.information(self.window, self.window.t("update_title"), message_text(self.window.t("update_current")))
             else:
                 self._offer(result)
         else:
@@ -188,7 +197,7 @@ class UpdateController(QObject):
         if QApplication.activeModalWidget() is not None:
             QTimer.singleShot(500, lambda: self._offer(release))
             return
-        self.window.statusBar().showMessage(self.window.t("update_available").format(self.info.version, release.version))
+        self.window.statusBar().showMessage(self.window.t("update_available", self.info.version, release.version))
         self.offer = UpdateOffer(self.window, self.info.version, release)
         self.offer.accepted.connect(lambda: self._install(release))
         self.offer.finished.connect(self._offer_closed)
@@ -287,7 +296,7 @@ class UpdateController(QObject):
         if self.close_pending:
             self.window.close()
         elif self.manual and code != "cancelled":
-            QMessageBox.warning(self.window, self.window.t("update_title"), text)
+            QMessageBox.warning(self.window, self.window.t("update_title"), message_text(text))
 
     def can_close(self) -> bool:
         if self.handing_off:

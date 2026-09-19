@@ -11,6 +11,7 @@ from gui.certificate_dialog import CertificateDialog
 from gui.export_dialog import ExportDialog
 from gui.main_window_shared import ROLE_ID, ROLE_TYPE
 from gui.mango_dialog import MangoDialog
+from gui.plain_text import message_text
 from gui.spreadsheet import write_list_xlsx
 from openvpn.addressing import ValidationError
 
@@ -49,7 +50,7 @@ class MainWindowActionsMixin:
         )
 
     def _show_validation(self, exc: Exception) -> None:
-        QMessageBox.warning(self, self.t("validation_error"), str(exc))
+        QMessageBox.warning(self, self.t("validation_error"), message_text(self.t.error(exc)))
 
     def add_branch(self) -> None:
         dialog = BranchDialog(self.t, parent=self)
@@ -70,7 +71,7 @@ class MainWindowActionsMixin:
         branch = self._branch(self._selected_branch_id())
         if branch is None:
             QMessageBox.information(
-                self, self.t("edit_branch"), self.t("select_branch_first")
+                self, self.t("edit_branch"), message_text(self.t("select_branch_first"))
             )
             return
         dialog = BranchDialog(self.t, branch, self)
@@ -86,13 +87,13 @@ class MainWindowActionsMixin:
         branch = self._branch(self._selected_branch_id())
         if branch is None:
             QMessageBox.information(
-                self, self.t("delete_branch"), self.t("select_branch_first")
+                self, self.t("delete_branch"), message_text(self.t("select_branch_first"))
             )
             return
         answer = QMessageBox.question(
             self,
             self.t("confirm_delete"),
-            self.t("delete_branch_question").format(branch.branch_number),
+            message_text(self.t("delete_branch_question", branch.branch_number)),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )
@@ -104,7 +105,7 @@ class MainWindowActionsMixin:
         branches = self.database.list_branches()
         if not branches:
             QMessageBox.information(
-                self, self.t("add_mango"), self.t("select_branch_first")
+                self, self.t("add_mango"), message_text(self.t("select_branch_first"))
             )
             return
         dialog = MangoDialog(
@@ -126,7 +127,7 @@ class MainWindowActionsMixin:
         mango = self._mango(self._selected_mango_id())
         if mango is None:
             QMessageBox.information(
-                self, self.t("edit_mango"), self.t("select_mango_first")
+                self, self.t("edit_mango"), message_text(self.t("select_mango_first"))
             )
             return
         dialog = MangoDialog(
@@ -145,13 +146,13 @@ class MainWindowActionsMixin:
         mango = self._mango(self._selected_mango_id())
         if mango is None:
             QMessageBox.information(
-                self, self.t("delete_mango"), self.t("select_mango_first")
+                self, self.t("delete_mango"), message_text(self.t("select_mango_first"))
             )
             return
         answer = QMessageBox.question(
             self,
             self.t("confirm_delete"),
-            self.t("delete_mango_question").format(mango.name),
+            message_text(self.t("delete_mango_question", mango.name)),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )
@@ -187,7 +188,7 @@ class MainWindowActionsMixin:
         if overwrite and QMessageBox.question(
             self,
             self.t("export_list"),
-            self.t("xlsx_replace").format(path),
+            message_text(self.t("xlsx_replace", path)),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         ) != QMessageBox.Yes:
@@ -210,11 +211,11 @@ class MainWindowActionsMixin:
             )
         except Exception as exc:
             QMessageBox.warning(
-                self, self.t("export_list"), self.t("xlsx_error").format(exc)
+                self, self.t("export_list"), message_text(self.t("xlsx_error", exc))
             )
             return
         QMessageBox.information(
-            self, self.t("export_list"), self.t("xlsx_saved").format(path)
+            self, self.t("export_list"), message_text(self.t("xlsx_saved", path))
         )
 
     def export_configs(self) -> None:

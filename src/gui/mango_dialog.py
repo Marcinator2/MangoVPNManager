@@ -4,14 +4,13 @@ from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
     QDialogButtonBox,
-    QFormLayout,
-    QLabel,
     QMessageBox,
     QSpinBox,
     QVBoxLayout,
 )
 
 from database.models import Branch, Mango
+from gui.plain_text import PlainFormLayout as QFormLayout, PlainLabel as QLabel, message_text
 from gui.sizing import resize_dialog_to_content
 from openvpn.addressing import ValidationError, calculate_addresses
 
@@ -83,12 +82,12 @@ class MangoDialog(QDialog):
     def accept(self) -> None:
         branch = self._branches.get(self.branch_combo.currentData())
         if branch is None:
-            QMessageBox.warning(self, self._t("validation_error"), self._t("select_branch_first"))
+            QMessageBox.warning(self, self._t("validation_error"), message_text(self._t("select_branch_first")))
             return
         try:
             calculate_addresses(branch.branch_number, branch.internal_id, self.number_spin.value())
         except ValidationError as exc:
-            QMessageBox.warning(self, self._t("validation_error"), str(exc))
+            QMessageBox.warning(self, self._t("validation_error"), message_text(self._t.error(exc)))
             return
         super().accept()
 
