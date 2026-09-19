@@ -85,14 +85,15 @@ Primary files:
   releases and tags on other commits, and pin scanning/building/tagging to the
   same Main commit. Create new annotated tags only after every check passes.
   Build-only runs create no tags or releases; artifacts are retained 14 days.
-  Keep the workflow on default 'develop' too for manual dispatch. Tag and
+  Keep the workflow on the default branch 'main' for manual dispatch. Tag and
   release creation happen in the same run without token-trigger recursion.
 - 'Develop Build' runs manually on 'develop', scans complete history, tests,
   builds, and checks package contents before publishing a pre-release with a
   unique 'develop-<run ID>-<attempt>' tag on the tested commit. It never replaces
   the latest stable release. Disable its publish input for a build-only test;
   both modes retain downloadable ZIP/checksum artifacts for 14 days. Keep the
-  workflow on the default branch (currently 'develop') for manual dispatch.
+  workflow on the default branch ('main') for manual dispatch, then select
+  'develop' when starting the workflow.
 - The MIT license covers source code. The mb-soft PNG and ICO logo files are
   excluded as described in 'ASSETS-LICENSE.md'. 'mb-soft' is an unregistered
   project name, not a registered company or trademark.
