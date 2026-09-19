@@ -14,7 +14,7 @@ $iconFile = Join-Path $projectRoot "icons\mb-soft.ico"
 $iconData = "$(Join-Path $projectRoot 'icons');icons"
 $buildDir = Join-Path $projectRoot "build"
 $stagingDist = Join-Path $buildDir "package-staging"
-$targetDist = Join-Path $projectRoot "dist\MangoVPNManager"
+$targetDist = Join-Path $projectRoot "dist\OpenVPNManager"
 
 if ($Start -and ($Clean -or $StagingOnly)) {
     throw "Use -Start to run from source; it cannot be combined with -Clean or -StagingOnly."
@@ -80,7 +80,7 @@ $metadataFile = Join-Path $metadataDir "build-info.json"
 # The independent helper can replace Qt and Python DLLs from a temporary copy.
 & $pythonExe -m PyInstaller `
     --clean --noconfirm --onefile --windowed `
-    --name MangoVPNUpdater `
+    --name OpenVPNUpdater `
     --icon $iconFile `
     --paths (Join-Path $projectRoot "src") `
     --distpath (Join-Path $buildDir "helper-staging") `
@@ -93,7 +93,7 @@ if ($LASTEXITCODE -ne 0) { throw "Updater build failed." }
     --clean `
     --noconfirm `
     --windowed `
-    --name MangoVPNManager `
+    --name OpenVPNManager `
     --icon $iconFile `
     --add-data $iconData `
     --add-data "$metadataFile;." `
@@ -107,11 +107,11 @@ if ($LASTEXITCODE -ne 0) {
     throw "PyInstaller failed with exit code $LASTEXITCODE."
 }
 
-$stagedApp = Join-Path $stagingDist "MangoVPNManager"
-$stagedExe = Join-Path $stagedApp "MangoVPNManager.exe"
+$stagedApp = Join-Path $stagingDist "OpenVPNManager"
+$stagedExe = Join-Path $stagedApp "OpenVPNManager.exe"
 $stagedInternal = Join-Path $stagedApp "_internal"
-$stagedUpdater = Join-Path $stagedApp "MangoVPNUpdater.exe"
-Copy-Item -LiteralPath (Join-Path $buildDir "helper-staging\MangoVPNUpdater.exe") -Destination $stagedUpdater
+$stagedUpdater = Join-Path $stagedApp "OpenVPNUpdater.exe"
+Copy-Item -LiteralPath (Join-Path $buildDir "helper-staging\OpenVPNUpdater.exe") -Destination $stagedUpdater
 if (-not (Test-Path -LiteralPath $stagedExe) -or -not (Test-Path -LiteralPath $stagedInternal)) {
     throw "Staged PyInstaller output is incomplete."
 }
@@ -121,10 +121,10 @@ if ($StagingOnly) {
     return
 }
 
-$runningApp = Get-Process -Name "MangoVPNManager", "MangoVPNUpdater" -ErrorAction SilentlyContinue |
+$runningApp = Get-Process -Name "OpenVPNManager", "OpenVPNUpdater" -ErrorAction SilentlyContinue |
     Where-Object { $_.Path -and $_.Path.StartsWith($targetDist, [System.StringComparison]::OrdinalIgnoreCase) }
 if ($runningApp) {
-    throw "MangoVPNManager is running from the target directory. Close it before updating the build."
+    throw "OpenVPNManager is running from the target directory. Close it before updating the build."
 }
 
 New-Item -ItemType Directory -Path $targetDist -Force | Out-Null
@@ -134,9 +134,9 @@ if (-not $resolvedTarget.StartsWith("$resolvedProject\dist\", [System.StringComp
     throw "Refusing unsafe build target: $resolvedTarget"
 }
 
-$targetExe = Join-Path $targetDist "MangoVPNManager.exe"
+$targetExe = Join-Path $targetDist "OpenVPNManager.exe"
 $targetInternal = Join-Path $targetDist "_internal"
-$targetUpdater = Join-Path $targetDist "MangoVPNUpdater.exe"
+$targetUpdater = Join-Path $targetDist "OpenVPNUpdater.exe"
 if (Test-Path -LiteralPath $targetExe) {
     Remove-Item -LiteralPath $targetExe -Force
 }

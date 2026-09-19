@@ -1,6 +1,6 @@
-# Mango VPN Manager — agent project context
+# OpenVPN Manager — agent project context
 
-This repository contains Mango VPN Manager, a Windows desktop tool for managing
+This repository contains OpenVPN Manager, a Windows desktop tool for managing
 branches, Mango routers, OpenVPN certificates, and configuration exports.
 
 ## Immutable reference material
@@ -20,7 +20,7 @@ branches, Mango routers, OpenVPN certificates, and configuration exports.
 - Packaging: PyInstaller through 'build.ps1'.
 - OpenVPN default root: 'C:\Program Files\OpenVPN'.
 - Easy-RSA default root: 'C:\Program Files\OpenVPN\easy-rsa'.
-- Live PKI default: 'C:\ProgramData\MangoVPNManager\pki'.
+- Live PKI default: 'C:\ProgramData\OpenVPNManager\pki'.
 - The implementation has been integration-tested with OpenVPN 2.7.7 and
   Easy-RSA 3.2.6.
 
@@ -33,7 +33,10 @@ other machine-specific values. They are user settings and may change.
 
 - Running 'python src\main.py' uses 'data/' in the repository.
 - Running the packaged EXE uses 'data/' beside the EXE in
-  'dist\MangoVPNManager\'.
+  'dist\OpenVPNManager\'.
+- New databases are named 'openvpn_manager.db'. Pre-rename development
+  databases and PKIs require an explicit manual move/rename; never migrate,
+  copy, or merge them automatically.
 
 Do not assume that repository data and packaged-application data are the same.
 Never copy, replace, or merge either database automatically.
@@ -72,7 +75,7 @@ Primary files:
 
 ## Public repository hygiene
 
-- Public repository: 'Marcinator2/MangoVPNManager'.
+- Public repository: 'Marcinator2/OpenVPN-Manager'.
 - Use English for comments, docstrings, commit messages, and documentation.
   German is allowed only as localized UI content in 'src/gui/i18n.py'.
 - Never commit runtime databases, settings, logs, status files, PKI material,
@@ -222,7 +225,7 @@ testing.
 
 - Never delete the active PKI permanently.
 - Move it to a timestamped sibling backup:
-  'C:\ProgramData\MangoVPNManager\pki-backups\pki-<timestamp>'.
+  'C:\ProgramData\OpenVPNManager\pki-backups\pki-<timestamp>'.
 - Refuse symlink paths, drive roots, missing PKIs, and unrecognized directories.
 - Reset certificate and configuration statuses only after a successful move.
 - Never invoke PKI reset automatically.
@@ -294,18 +297,18 @@ Server installation is a separate, explicitly confirmed action:
   The Updates menu also supports manual checks. Source/development builds do not
   install updates or automatically contact the release service.
 - Accept only newer stable 'vX.Y.Z' GitHub releases from
-  'Marcinator2/MangoVPNManager'. The stable release workflow enforces main
+  'Marcinator2/OpenVPN-Manager'. The stable release workflow enforces main
   ancestry, embeds the tag, and marks the release as latest.
 - Download and installation require the user's Update now action. Use HTTPS,
   the matching SHA-256 sidecar, bounded downloads, safe archive paths, and a
   data-free packaged startup check before handing off.
-- Replace only 'MangoVPNManager.exe', '_internal/', and 'MangoVPNUpdater.exe'.
+- Replace only 'OpenVPNManager.exe', '_internal/', and 'OpenVPNUpdater.exe'.
   Never copy, merge, restore, or migrate user databases as an updater operation.
   Do not touch PKI, exports, or OpenVPN services.
 - Run the standalone helper from a temporary external copy; use process
   creation identity and cross-session Windows mutexes before replacement.
   Never forcibly stop the user's application.
-- Keep an atomic journal and the last program backup under '.mango-update/'.
+- Keep an atomic journal and the last program backup under '.openvpn-manager-update/'.
   Recover interrupted replacements before opening user data. If the loader is
   unavailable, the standalone helper supports '--recover <application-folder>'.
 - Refuse linked/junction paths. Missing write access requires restarting the
@@ -399,7 +402,7 @@ Build the Windows application:
 
 Expected executable:
 
-'dist\MangoVPNManager\MangoVPNManager.exe'
+'dist\OpenVPNManager\OpenVPNManager.exe'
 
 The build must bundle application code, the standalone updater, build identity,
 and icons only. It must not bundle
@@ -413,11 +416,11 @@ missing local environment, installs requirements-dev.txt, and runs pip check.
 '-Start' prepares the environment and runs from source instead of building;
 it cannot be combined with '-Clean' or '-StagingOnly'. Existing invalid environments are not
 replaced automatically. It must preserve an existing
-'dist\MangoVPNManager\data' directory, including on clean builds, and refuse
+'dist\OpenVPNManager\data' directory, including on clean builds, and refuse
 deployment while the packaged application is running. '-StagingOnly' builds to
-'build/package-staging/MangoVPNManager' without replacing the installed copy.
+'build/package-staging/OpenVPNManager' without replacing the installed copy.
 '-ReleaseVersion vX.Y.Z' embeds a stable identity; other builds are development
-builds. CI runs 'python scripts/smoke_update.py dist/MangoVPNManager' after
+builds. CI runs 'python scripts/smoke_update.py dist/OpenVPNManager' after
 building; local staging verification passes the staging directory instead.
 
 ## Maintaining this file
@@ -452,4 +455,6 @@ building; local staging verification passes the staging directory instead.
   interrupted-transaction recovery, and preserved-data update smoke test work.
 - The Windows staging build and release-content safety check pass.
 - Manual stable-release version validation and immutable tag safeguards pass.
-- The test suite passes with 165 tests.
+- The application, executables, release packages, and repository are named OpenVPN Manager.
+- New installations use 'openvpn_manager.db' and the OpenVPNManager ProgramData PKI path.
+- The test suite passes with 166 tests.

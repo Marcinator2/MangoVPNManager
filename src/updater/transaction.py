@@ -16,7 +16,7 @@ import uuid
 from updater.package import MANAGED
 from updater.release import UpdateError
 
-WORK = ".mango-update"
+WORK = ".openvpn-manager-update"
 
 
 def safe_path(path: Path) -> Path:
@@ -80,7 +80,7 @@ def preflight(root: Path, required_space: int) -> None:
     validate_installation(root)
     if shutil.disk_usage(root).free < required_space:
         raise UpdateError("space")
-    probe = root / (".mango-write-" + uuid.uuid4().hex)
+    probe = root / (".openvpn-manager-write-" + uuid.uuid4().hex)
     try:
         probe.mkdir()
         child = probe / "probe"

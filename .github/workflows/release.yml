@@ -103,19 +103,19 @@ jobs:
 
       - name: Smoke test packaged updater with synthetic data
         shell: pwsh
-        run: python scripts/smoke_update.py dist/MangoVPNManager
+        run: python scripts/smoke_update.py dist/OpenVPNManager
 
       - name: Verify and package release
         id: package
         shell: pwsh
         run: |
-          .\scripts\assert-release-safe.ps1 -ApplicationDirectory .\dist\MangoVPNManager
-          $metadata = Get-Content .\dist\MangoVPNManager\_internal\build-info.json -Raw | ConvertFrom-Json
+          .\scripts\assert-release-safe.ps1 -ApplicationDirectory .\dist\OpenVPNManager
+          $metadata = Get-Content .\dist\OpenVPNManager\_internal\build-info.json -Raw | ConvertFrom-Json
           if ($metadata.version -cne $env:RELEASE_TAG -or $metadata.commit -cne $env:SOURCE_COMMIT) {
               throw "Packaged identity does not match the validated release."
           }
-          $archive = "MangoVPNManager-$env:RELEASE_TAG-windows-x64.zip"
-          Compress-Archive -LiteralPath .\dist\MangoVPNManager -DestinationPath $archive
+          $archive = "OpenVPNManager-$env:RELEASE_TAG-windows-x64.zip"
+          Compress-Archive -LiteralPath .\dist\OpenVPNManager -DestinationPath $archive
           $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash *$archive" | Set-Content -LiteralPath "$archive.sha256" -Encoding ascii
           "archive=$archive" >> $env:GITHUB_OUTPUT
@@ -147,7 +147,7 @@ jobs:
           ARCHIVE: ${{ steps.package.outputs.archive }}
           CHECKSUM: ${{ steps.package.outputs.checksum }}
         run: |
-          gh release create $env:RELEASE_TAG $env:ARCHIVE $env:CHECKSUM --verify-tag --latest --generate-notes --title "Mango VPN Manager $env:RELEASE_TAG" --notes "The Windows executables are unsigned. Verify the supplied SHA-256 checksum before extracting the archive."
+          gh release create $env:RELEASE_TAG $env:ARCHIVE $env:CHECKSUM --verify-tag --latest --generate-notes --title "OpenVPN Manager $env:RELEASE_TAG" --notes "The Windows executables are unsigned. Verify the supplied SHA-256 checksum before extracting the archive."
           if ($LASTEXITCODE -ne 0) { throw "Stable release publication failed." }
 
       - name: Summarize release run
