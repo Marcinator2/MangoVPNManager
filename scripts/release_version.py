@@ -76,7 +76,7 @@ def github(method: str, endpoint: str, payload: dict | None = None) -> dict | No
         data=json.dumps(payload).encode() if payload is not None else None,
         headers={"Authorization": "Bearer " + os.environ["GH_TOKEN"],
                  "Accept": "application/vnd.github+json", "Content-Type": "application/json",
-                 "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "MangoVPNManager-release"},
+                 "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "OpenVPNManager-release"},
     )
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
@@ -123,7 +123,7 @@ def create_release_tag() -> None:
         raise ValueError("Release identity changed after validation.")
     if tag not in tags:
         annotated = github("POST", "git/tags", {
-            "tag": tag, "message": f"Mango VPN Manager {tag}", "object": commit, "type": "commit",
+            "tag": tag, "message": f"OpenVPN Manager {tag}", "object": commit, "type": "commit",
         })
         if not annotated or not re.fullmatch(r"[0-9a-f]{40}", annotated.get("sha", "")):
             raise RuntimeError("GitHub returned an invalid tag object.")

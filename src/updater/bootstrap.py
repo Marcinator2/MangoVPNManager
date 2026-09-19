@@ -23,9 +23,9 @@ def startup_guard() -> tuple[bool, InstallationLock | None]:
             journal = load_journal(root)
             if journal and journal["phase"] == "applying":
                 operation = operation_dir(root, journal["id"])
-                sources = [root / "MangoVPNUpdater.exe",
-                           operation / "backup" / "MangoVPNUpdater.exe",
-                           operation / "verified" / "MangoVPNUpdater.exe"]
+                sources = [root / "OpenVPNUpdater.exe",
+                           operation / "backup" / "OpenVPNUpdater.exe",
+                           operation / "verified" / "OpenVPNUpdater.exe"]
                 source = next((item for item in sources if item.is_file()), None)
                 if source is None:
                     raise UpdateError("recovery")

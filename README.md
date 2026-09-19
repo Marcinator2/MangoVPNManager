@@ -1,13 +1,13 @@
-# Mango VPN Manager
+# OpenVPN Manager
 
-[![CI](https://github.com/Marcinator2/MangoVPNManager/actions/workflows/ci.yml/badge.svg)](https://github.com/Marcinator2/MangoVPNManager/actions/workflows/ci.yml)
+[![CI](https://github.com/Marcinator2/OpenVPN-Manager/actions/workflows/ci.yml/badge.svg)](https://github.com/Marcinator2/OpenVPN-Manager/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Mango VPN Manager is a local Windows desktop application for managing branch
+OpenVPN Manager is a local Windows desktop application for managing branch
 sites, Mango routers, OpenVPN certificates, server configuration, exports, and
 live connection status. It is published by the unregistered **mb-soft** project.
 
-![Mango VPN Manager main window](docs/screenshots/main-window.png)
+![OpenVPN Manager main window](docs/screenshots/main-window.png)
 
 ## Features
 
@@ -40,8 +40,9 @@ Windows SmartScreen may warn because the executable is not currently
 code-signed.
 
 ```powershell
-Get-FileHash .\MangoVPNManager-v0.1.0-windows-x64.zip -Algorithm SHA256
-Get-Content .\MangoVPNManager-v0.1.0-windows-x64.zip.sha256
+$archive = Get-Item .\OpenVPNManager-v*-windows-x64.zip
+Get-FileHash $archive -Algorithm SHA256
+Get-Content "$archive.sha256"
 ```
 
 The hashes must match exactly. Release archives never contain a database,
@@ -56,9 +57,12 @@ user data, then closes and restarts the application. **Later** leaves the
 installed version unchanged. Downloads and preparation can be cancelled.
 Develop pre-releases and source builds do not install or automatically check
 for updates. Versions without an updater need one manual upgrade first.
+Pre-rename Mango VPN Manager builds also require one manual installation of an
+OpenVPN Manager release because their updater expects the former executable and
+archive names.
 
-The updater replaces only `MangoVPNManager.exe`, `_internal/`, and
-`MangoVPNUpdater.exe`. It preserves `data/`, settings, databases, PKI, exports,
+The updater replaces only `OpenVPNManager.exe`, `_internal/`, and
+`OpenVPNUpdater.exe`. It preserves `data/`, settings, databases, PKI, exports,
 and other files outside those managed program entries. It never controls
 OpenVPN services. Close other application instances before updating. If the
 installation folder is protected, restart the application as administrator;
@@ -73,8 +77,8 @@ is not an independent publisher signature.
 
 ### Recovery
 
-The updater records its transaction under `.mango-update/` and retains the last
-program backup under `.mango-update/<transaction-id>/backup/`. Replacement
+The updater records its transaction under `.openvpn-manager-update/` and retains the last
+program backup under `.openvpn-manager-update/<transaction-id>/backup/`. Replacement
 failures restore the previous program files. Interrupted replacements are
 recovered before the next normal startup opens the database.
 
@@ -82,7 +86,7 @@ If an interruption left the EXE or its runtime temporarily unavailable, close
 all instances and run the standalone helper from the installation directory:
 
 ```powershell
-.\MangoVPNUpdater.exe --recover (Get-Location).Path
+.\OpenVPNUpdater.exe --recover (Get-Location).Path
 ```
 
 If that helper is also missing, run the copy in the transaction's `backup/`
@@ -100,8 +104,8 @@ boundary.
 ## Development setup
 
 ```powershell
-git clone https://github.com/Marcinator2/MangoVPNManager.git
-cd MangoVPNManager
+git clone https://github.com/Marcinator2/OpenVPN-Manager.git
+cd OpenVPN-Manager
 .\build.ps1 -Start
 ```
 
@@ -113,14 +117,20 @@ Do not combine `-Start` with `-Clean` or `-StagingOnly`. Environment activation 
 
 Source execution stores SQLite data and settings under the local `data/`
 directory. Packaged execution uses `data/` beside the EXE. Both are ignored.
+New installations use `data/openvpn_manager.db` and
+`C:\ProgramData\OpenVPNManager\pki`. Data from a pre-rename development copy
+must be migrated manually: place the database in the new `data/` directory,
+rename it to `openvpn_manager.db`, move the PKI to the new ProgramData path,
+and update `pki_path` in a copied `settings.json`. The application never copies
+or merges databases or PKI material automatically.
 
 ## Tests and Windows build
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q
 .\build.ps1
-.\scripts\assert-release-safe.ps1 -ApplicationDirectory .\dist\MangoVPNManager
-.\.venv\Scripts\python.exe scripts\smoke_update.py dist\MangoVPNManager
+.\scripts\assert-release-safe.ps1 -ApplicationDirectory .\dist\OpenVPNManager
+.\.venv\Scripts\python.exe scripts\smoke_update.py dist\OpenVPNManager
 ```
 
 CI may pass an already provisioned interpreter explicitly with
@@ -129,7 +139,7 @@ CI may pass an already provisioned interpreter explicitly with
 The embedded identity includes version, build type, and source commit.
 
 Use `-StagingOnly` to build without replacing an existing packaged installation.
-Its output is `build/package-staging/MangoVPNManager`; pass that directory to
+Its output is `build/package-staging/OpenVPNManager`; pass that directory to
 the safety check and smoke test instead. The smoke test uses temporary program
 copies and synthetic data, tests the real helper, and cleans up its own test
 processes and files. It does not download a release or use the live PKI.

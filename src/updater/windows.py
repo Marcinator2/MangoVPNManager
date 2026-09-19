@@ -29,7 +29,7 @@ class InstallationLock:
     def __init__(self, root: Path, kind: str = "application") -> None:
         self.handle = None
         digest = hashlib.sha256(str(root.resolve()).casefold().encode("utf-8")).hexdigest()
-        self.name = f"Global\\MangoVPNManager-{kind}-{digest}"
+        self.name = f"Global\\OpenVPNManager-{kind}-{digest}"
 
     def acquire(self):
         dll = kernel()

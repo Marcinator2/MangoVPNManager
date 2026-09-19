@@ -11,7 +11,7 @@ from pathlib import Path, PurePosixPath
 from config.version import read_build_info
 from updater.release import UpdateError, check_cancel
 
-MANAGED = ("MangoVPNManager.exe", "_internal", "MangoVPNUpdater.exe")
+MANAGED = ("OpenVPNManager.exe", "_internal", "OpenVPNUpdater.exe")
 MAX_UNPACKED = 1536 * 1024 * 1024
 MAX_ENTRIES = 20000
 FORBIDDEN = {".db", ".sqlite", ".sqlite3", ".key", ".pem", ".p12", ".pfx",
@@ -44,7 +44,7 @@ def archive_entries(archive: zipfile.ZipFile) -> list[tuple[zipfile.ZipInfo, Pat
         name = entry.filename
         parts = name.rstrip("/").split("/")
         if (entry.orig_filename != name or "\\" in name or entry.flag_bits & 1
-                or not parts or parts[0] != "MangoVPNManager"):
+                or not parts or parts[0] != "OpenVPNManager"):
             raise UpdateError("package_invalid")
         mode = entry.external_attr >> 16
         if stat.S_IFMT(mode) not in (0, stat.S_IFREG, stat.S_IFDIR):
@@ -75,8 +75,8 @@ def archive_entries(archive: zipfile.ZipFile) -> list[tuple[zipfile.ZipInfo, Pat
         for count in range(1, len(parents) + 1):
             if seen.get("/".join(parents[:count])) is False:
                 raise UpdateError("package_invalid")
-    required = {f"mangovpnmanager/{name.lower()}": False for name in (MANAGED[0], MANAGED[2])}
-    required["mangovpnmanager/_internal/build-info.json"] = False
+    required = {f"openvpnmanager/{name.lower()}": False for name in (MANAGED[0], MANAGED[2])}
+    required["openvpnmanager/_internal/build-info.json"] = False
     if any(seen.get(name) is not directory for name, directory in required.items()):
         raise UpdateError("package_invalid")
     return result

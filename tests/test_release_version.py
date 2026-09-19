@@ -127,7 +127,7 @@ def test_creates_annotated_tag_on_exact_tested_commit(monkeypatch):
         return {"sha": "c" * 40}
     monkeypatch.setattr(release, "github", api)
     release.create_release_tag()
-    assert requests[0] == ("POST", "git/tags", {"tag": "v0.2.0", "message": "Mango VPN Manager v0.2.0", "object": COMMIT, "type": "commit"})
+    assert requests[0] == ("POST", "git/tags", {"tag": "v0.2.0", "message": "OpenVPN Manager v0.2.0", "object": COMMIT, "type": "commit"})
     assert requests[1] == ("POST", "git/refs", {"ref": "refs/tags/v0.2.0", "sha": "c" * 40})
 
 

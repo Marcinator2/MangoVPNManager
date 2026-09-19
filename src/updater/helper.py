@@ -31,7 +31,7 @@ class FileCancellation(threading.Event):
 def verify_startup(root: Path, cancel: FileCancellation) -> None:
     environment = os.environ.copy()
     environment["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
-    process = subprocess.Popen([str(root / "MangoVPNManager.exe"), "--smoke-test"],
+    process = subprocess.Popen([str(root / "OpenVPNManager.exe"), "--smoke-test"],
                                cwd=root, env=environment)
     try:
         deadline = time.monotonic() + 30
@@ -54,7 +54,7 @@ def launch(root: Path) -> None:
     # Do not reuse the one-file helper's PyInstaller extraction environment.
     environment = os.environ.copy()
     environment["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
-    subprocess.Popen([str(root / "MangoVPNManager.exe")], cwd=root, env=environment)
+    subprocess.Popen([str(root / "OpenVPNManager.exe")], cwd=root, env=environment)
 
 
 def execute(job_path: Path) -> int:
@@ -65,7 +65,7 @@ def execute(job_path: Path) -> int:
         raise UpdateError("path")
     version_tuple(job["version"])
     cancel = FileCancellation(operation / "cancel")
-    parent = ProcessIdentity(job["pid"], root / "MangoVPNManager.exe", job["creation"])
+    parent = ProcessIdentity(job["pid"], root / "OpenVPNManager.exe", job["creation"])
     changed = False
     update_lock = InstallationLock(root, "update").acquire()
     app_lock = InstallationLock(root)
@@ -74,7 +74,7 @@ def execute(job_path: Path) -> int:
         installed = read_build_info(root / "_internal" / "build-info.json")
         if installed.build_type != "stable" or version_tuple(job["version"]) <= version_tuple(installed.version):
             raise UpdateError("release_invalid")
-        name = f"MangoVPNManager-{job['version']}-windows-x64.zip"
+        name = f"OpenVPNManager-{job['version']}-windows-x64.zip"
         verify_checksum(operation / "download.zip", (operation / "checksum.txt").read_bytes(), name, cancel)
         extract_package(operation / "download.zip", operation / "verified", job["version"], cancel)
         verify_startup(operation / "verified", cancel)
