@@ -170,6 +170,31 @@ Development happens on `develop`; release-ready changes reach `main` through a
 pull request. See [CONTRIBUTING.md](CONTRIBUTING.md), [ROADMAP.md](ROADMAP.md),
 and [CHANGELOG.md](CHANGELOG.md).
 
+To publish a stable release, open **Actions > Release > Run workflow**, select
+**main**, and enter the new version (for example `v0.2.0` or `0.2.0`).
+Leave **Publish the stable release** enabled to publish, or disable it for a
+build-only test. Version numbers are chosen by the maintainer, not incremented
+automatically. A merge to `main` alone does not publish anything.
+
+The workflow scans the complete history, tests, builds, runs the packaged
+updater smoke test, and checks package contents. Only after those checks pass
+does it create the annotated tag on the exact tested commit and publish the
+ZIP and checksum as the latest stable release. The same normalized `vX.Y.Z`
+identity appears in the tag, release, archive name, and application. Both modes
+retain downloadable ZIP/checksum artifacts for 14 days.
+
+Versions must be newer than existing stable tags. Existing releases (including
+drafts) are never overwritten, and a tag pointing to another commit is refused.
+If publication fails after creating a tag, rerun the same version on the same
+Main commit while no release exists; otherwise resolve the failed publication
+before retrying. Never move or delete a published tag.
+
+Manually pushing a new stable tag still starts the Release workflow. Keep the
+workflow on the default branch (`develop`) as well as `main` so GitHub displays
+the manual start button. Manual runs on branches other than `main` are rejected.
+The workflow creates the tag and release in the same run; it does not rely on
+a tag created by `GITHUB_TOKEN` triggering another workflow.
+
 To publish a development build, open **Actions > Develop Build > Run workflow**,
 select **develop**, leave **Publish a GitHub pre-release** enabled, and start the
 workflow. It scans the complete history for secrets, runs tests, builds Windows
