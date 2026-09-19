@@ -80,6 +80,29 @@ def test_oven_settings_and_complete_list_export(tmp_path, monkeypatch, language)
         assert window.t("unknown") in child.text(10)
         assert branch.text(1) == "Test branch"
         assert window.tree.headerItem().text(1) == window.t("description")
+        assert window.device_table.topLevelItemCount() == 3
+        assert window.device_table.isColumnHidden(3)
+        window.tree.setCurrentItem(branch)
+        application.processEvents()
+        assert window.device_table.topLevelItemCount() == 2
+        device = window.device_table.topLevelItem(0)
+        window.device_table.setCurrentItem(device)
+        application.processEvents()
+        selected_id = device.data(0, main_window.ROLE_ID)
+        assert window._selected_mango_id() == selected_id
+        selected_mango = window._mango(selected_id)
+        assert selected_mango is not None
+        assert device.text(1) == selected_mango.branch_number
+        assert device.text(3) == "1"
+        assert device.text(6) == selected_mango.mango_ip
+        assert device.text(7) == selected_mango.oven_ip
+        assert device.text(8) == selected_mango.oven_subnet_mask
+        assert device.text(9) == selected_mango.oven_gateway
+        assert device.text(10) == window.t("no")
+        assert device.text(11) == window.t("no")
+        assert window.t("unknown") in device.text(12)
+        window._select_all_mangos()
+        assert window.device_table.topLevelItemCount() == 3
         path = tmp_path / "list.xlsx"
         monkeypatch.setattr(QFileDialog, "getSaveFileName", lambda *args, **kwargs: (str(path.with_suffix("")), ""))
         monkeypatch.setattr(QMessageBox, "information", lambda *args: QMessageBox.Ok)
