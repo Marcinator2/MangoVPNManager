@@ -38,7 +38,7 @@ class ExportBundle:
 def _ccd(mango: Mango) -> str:
     network, prefix = mango.lan_network.split("/")
     if prefix != "24":
-        raise ValidationError("Only /24 Mango LAN networks are supported.")
+        raise ValidationError('Only /24 Router LAN networks are supported.', translation_key='validation_lan')
     return (
         f"ifconfig-push {mango.vpn_ip} 255.255.0.0\n"
         f"iroute {network} 255.255.255.0\n"
@@ -201,7 +201,7 @@ def build_export_bundle(
     openvpn_status_path: Path | None = None,
 ) -> ExportBundle:
     if not mangos:
-        raise ValidationError("No Mangos were selected for export.")
+        raise ValidationError('No Routers were selected for export.', translation_key='no_mangos')
     server_host = _validate_server_host(server_host)
     if not 1 <= server_port <= 65535:
         raise ValidationError("The VPN server port must be between 1 and 65535.")

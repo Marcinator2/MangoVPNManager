@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import json
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+
+from config.terminology import Terminology, normalize_terminology
 
 from openvpn.easyrsa import (
     DEFAULT_EASYRSA_ROOT,
@@ -38,12 +40,15 @@ class AppSettings:
     openvpn_root: Path = DEFAULT_OPENVPN_ROOT
     easyrsa_root: Path = DEFAULT_EASYRSA_ROOT
     pki_path: Path = DEFAULT_PKI_PATH
+    terminology: Terminology = field(default_factory=dict)
 
 
 def load_settings(path: Path = SETTINGS_PATH) -> AppSettings:
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError, OSError):
+        return AppSettings()
+    if not isinstance(raw, dict):
         return AppSettings()
     language = raw.get("language", "en")
     if language not in {"en", "de"}:
@@ -58,6 +63,7 @@ def load_settings(path: Path = SETTINGS_PATH) -> AppSettings:
     if not 1 <= vpn_server_port <= 65535:
         vpn_server_port = 1194
     return AppSettings(
+        terminology=normalize_terminology(raw.get("terminology")),
         language=language,
         theme=theme,
         last_export_directory=str(raw.get("last_export_directory", "")),
@@ -75,6 +81,7 @@ def save_settings(settings: AppSettings, path: Path = SETTINGS_PATH) -> None:
     temporary.write_text(
         json.dumps(
             {
+                "terminology": normalize_terminology(settings.terminology),
                 "language": settings.language,
                 "theme": settings.theme,
                 "last_export_directory": settings.last_export_directory,

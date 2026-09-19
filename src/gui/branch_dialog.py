@@ -3,7 +3,6 @@ from __future__ import annotations
 from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
-    QFormLayout,
     QLineEdit,
     QMessageBox,
     QSpinBox,
@@ -11,6 +10,7 @@ from PySide6.QtWidgets import (
 )
 
 from database.models import Branch
+from gui.plain_text import PlainFormLayout as QFormLayout, message_text
 from gui.sizing import resize_dialog_to_content
 from openvpn.addressing import ValidationError, validate_branch_number
 
@@ -50,7 +50,7 @@ class BranchDialog(QDialog):
         try:
             validate_branch_number(self.number_edit.text())
         except ValidationError as exc:
-            QMessageBox.warning(self, self._t("validation_error"), str(exc))
+            QMessageBox.warning(self, self._t("validation_error"), message_text(self._t.error(exc)))
             return
         super().accept()
 

@@ -17,7 +17,7 @@ def database(tmp_path: Path):
 def test_branch_and_mango_round_trip(database: Database) -> None:
     branch = database.add_branch("0004", 4, "Test branch")
     mango = database.add_mango(branch.id or 0, 2)
-    assert mango.name == "0004_Mango2"
+    assert mango.name == "0004_Router2"
     stored = database.list_mangos(branch.id)
     assert len(stored) == 1
     assert stored[0].oven_ip == "10.4.2.102"
@@ -53,10 +53,10 @@ def test_branch_can_create_sequential_mangos_atomically(database: Database) -> N
     mangos = database.list_mangos(branch.id)
     assert [mango.mango_number for mango in mangos] == [1, 2, 3, 4]
     assert [mango.name for mango in mangos] == [
-        "BULK_Mango1",
-        "BULK_Mango2",
-        "BULK_Mango3",
-        "BULK_Mango4",
+        "BULK_Router1",
+        "BULK_Router2",
+        "BULK_Router3",
+        "BULK_Router4",
     ]
 
 
@@ -89,7 +89,7 @@ def test_updating_branch_recalculates_mango(database: Database) -> None:
     database.add_mango(branch.id or 0, 1)
     database.update_branch(Branch(branch.id, "WEST", 5, "Changed"))
     mango = database.list_mangos(branch.id)[0]
-    assert mango.name == "WEST_Mango1"
+    assert mango.name == "WEST_Router1"
     assert mango.vpn_ip == "10.8.5.1"
 
 

@@ -24,7 +24,7 @@ def mango() -> Mango:
         id=1,
         branch_id=1,
         mango_number=1,
-        name="0004_Mango1",
+        name="0004_Router1",
         vpn_ip="10.8.4.1",
         lan_network="10.4.1.0/24",
         mango_ip="10.4.1.1",
@@ -54,14 +54,14 @@ def pki(tmp_path: Path, mango: Mango) -> Path:
 
 def test_bundle_contains_ccd_routes_client_and_server(mango: Mango) -> None:
     bundle = build_export_bundle([mango])
-    assert bundle.files["ccd/0004_Mango1"] == (
+    assert bundle.files["ccd/0004_Router1"] == (
         "ifconfig-push 10.8.4.1 255.255.0.0\n"
         "iroute 10.4.1.0 255.255.255.0\n"
     )
     assert "route 10.4.1.0 255.255.255.0" in bundle.files["server.ovpn"]
     assert "server 10.8.0.0 255.255.0.0" in bundle.files["server.ovpn"]
-    assert "<CLIENT_PRIVATE_KEY_MISSING:0004_Mango1>" in bundle.files[
-        "clients/0004_Mango1.ovpn"
+    assert "<CLIENT_PRIVATE_KEY_MISSING:0004_Router1>" in bundle.files[
+        "clients/0004_Router1.ovpn"
     ]
     assert bundle.warnings
     assert not bundle.ready_for_export
@@ -78,7 +78,7 @@ def test_complete_bundle_embeds_material_but_preview_redacts_keys(
         server_port=1194,
     )
 
-    client = bundle.files["clients/0004_Mango1.ovpn"]
+    client = bundle.files["clients/0004_Router1.ovpn"]
     assert "remote vpn.example.com 1194" in client
     assert "-----BEGIN CERTIFICATE-----" in client
     assert "-----BEGIN PRIVATE KEY-----" in client
