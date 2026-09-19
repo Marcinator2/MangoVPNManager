@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
-from tempfile import NamedTemporaryFile
+import re
 
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 
 def write_list_xlsx(
@@ -22,7 +23,9 @@ def write_list_xlsx(
     """Stage a workbook beside its destination; preserve it if saving fails."""
     workbook = Workbook()
     sheet = workbook.active
-    sheet.title = sheet_title
+    safe_title = re.sub(r"[\\/*?:\[\]\x00-\x1f]", " ", sheet_title).strip().strip("'")
+    safe_title = safe_title[:31].rstrip("'")
+    sheet.title = safe_title if safe_title and safe_title.lower() != "history" else "OpenVPN Manager"
     try:
         for row_number, values in enumerate([headers, *rows], start=1):
             for column, value in enumerate(values, start=1):

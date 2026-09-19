@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from PySide6.QtWidgets import QDialog, QDialogButtonBox, QLabel, QVBoxLayout
+from PySide6.QtWidgets import QDialog, QDialogButtonBox, QVBoxLayout
 
 from gui.main_window_shared import ROLE_ID, ROLE_TYPE
+from gui.plain_text import PlainLabel as QLabel
+from gui.sizing import resize_dialog_to_content
+from gui.wrapping_button import WrappingButton
 from openvpn.easyrsa import EasyRSAPaths, EasyRSAService
 
 
@@ -50,12 +53,10 @@ class MainWindowWorkflowMixin:
         server_text = self.t("ready") if server_ready else self.t("not_ready")
         host_text = self.settings.vpn_server_host.strip() or self.t("not_configured")
         self._workflow_lines = (
-            self.t("workflow_step_mangos").format(markers[0], total),
-            self.t("workflow_step_certificates").format(
-                markers[1], ca_text, certificate_count, total, server_text
-            ),
-            self.t("workflow_step_server").format(markers[2], host_text),
-            self.t("workflow_step_export").format(markers[3], config_count, total),
+            self.t("workflow_step_mangos", markers[0], total),
+            self.t("workflow_step_certificates", markers[1], ca_text, certificate_count, total, server_text),
+            self.t("workflow_step_server", markers[2], host_text),
+            self.t("workflow_step_export", markers[3], config_count, total),
         )
         if not self.database.list_branches():
             summary_key, button_key = "workflow_summary_branch", "workflow_action_branch"
@@ -92,14 +93,13 @@ class MainWindowWorkflowMixin:
         layout.addWidget(steps)
         layout.addWidget(summary)
         buttons = QDialogButtonBox(QDialogButtonBox.Close)
-        next_button = buttons.addButton(
-            self.next_step_button.text(), QDialogButtonBox.ActionRole
-        )
+        next_button = WrappingButton(self.next_step_button.text())
+        buttons.addButton(next_button, QDialogButtonBox.ActionRole)
         next_button.setObjectName("primaryButton")
         next_button.clicked.connect(dialog.accept)
         buttons.rejected.connect(dialog.reject)
         layout.addWidget(buttons)
-        dialog.resize(610, 300)
+        resize_dialog_to_content(dialog, minimum_width=610, minimum_height=300)
         if dialog.exec() == QDialog.Accepted:
             self._run_next_workflow_step()
 

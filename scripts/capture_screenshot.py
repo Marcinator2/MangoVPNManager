@@ -13,6 +13,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from PySide6.QtWidgets import QApplication  # noqa: E402
+from PySide6.QtGui import QFontDatabase  # noqa: E402
 
 from config.settings import AppSettings  # noqa: E402
 from database.database import Database  # noqa: E402
@@ -40,7 +41,7 @@ def main() -> int:
     output = PROJECT_ROOT / "docs" / "screenshots" / "main-window.png"
     output.parent.mkdir(parents=True, exist_ok=True)
 
-    with tempfile.TemporaryDirectory(prefix="mango-docs-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="openvpn-docs-") as temporary:
         root = Path(temporary)
         openvpn_root = root / "OpenVPN"
         easyrsa_root = openvpn_root / "easy-rsa"
@@ -56,8 +57,8 @@ def main() -> int:
         )
 
         database = Database(root / "demo.db")
-        database.add_branch_with_mangos("1001", 3, "North branch")
-        database.add_branch_with_mangos("2042", 2, "South branch")
+        database.add_branch_with_mangos("1001", 3, "North location")
+        database.add_branch_with_mangos("2042", 2, "South location")
         mangos = database.list_mangos()
         _write_synthetic_material(pki_path, [mango.name for mango in mangos])
         for relative in (
@@ -75,6 +76,12 @@ def main() -> int:
         database.mark_configs_created([mango.id for mango in mangos if mango.id is not None])
 
         application = QApplication([])
+        # The Windows offscreen plugin needs explicit fonts for readable captures.
+        fonts = Path(os.environ.get("WINDIR", "C:/Windows")) / "Fonts"
+        for filename in ("segoeui.ttf", "segoeuib.ttf"):
+            font = fonts / filename
+            if font.is_file():
+                QFontDatabase.addApplicationFont(str(font))
         settings = AppSettings(
             language="en",
             theme="dark",

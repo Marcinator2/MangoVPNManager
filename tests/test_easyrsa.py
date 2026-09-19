@@ -101,10 +101,10 @@ def test_detects_realistic_easyrsa_326_pki_without_openssl_copy(service) -> None
 def test_creates_passwordless_client_certificate(service) -> None:
     manager, runner = service
     manager.initialize_ca()
-    manager.create_client_certificate("0004_Mango1")
-    assert manager.certificate_status("0004_Mango1").complete
+    manager.create_client_certificate("0004_Router1")
+    assert manager.certificate_status("0004_Router1").complete
     call = next(call for call in runner.calls if "build-client-full" in call)
-    assert call[-2:] == ["0004_Mango1", "nopass"]
+    assert call[-2:] == ["0004_Router1", "nopass"]
 
 
 def test_creates_server_certificate_and_tls_key(service) -> None:
@@ -120,7 +120,7 @@ def test_creates_server_certificate_and_tls_key(service) -> None:
 def test_recovers_existing_key_and_request_by_signing_them(service) -> None:
     manager, runner = service
     manager.initialize_ca()
-    name = "0004_Mango2"
+    name = "0004_Router2"
     (manager.paths.pki_path / "private" / f"{name}.key").write_text(
         "private",
         encoding="utf-8",
@@ -142,9 +142,9 @@ def test_recovers_existing_key_and_request_by_signing_them(service) -> None:
 def test_refuses_to_overwrite_existing_certificate(service) -> None:
     manager, _ = service
     manager.initialize_ca()
-    manager.create_client_certificate("0004_Mango1")
+    manager.create_client_certificate("0004_Router1")
     with pytest.raises(EasyRSAError):
-        manager.create_client_certificate("0004_Mango1")
+        manager.create_client_certificate("0004_Router1")
 
 
 def test_rejects_unsafe_common_name(service) -> None:
@@ -156,7 +156,7 @@ def test_rejects_unsafe_common_name(service) -> None:
 def test_resets_pki_by_moving_it_to_timestamped_backup(service) -> None:
     manager, _ = service
     manager.initialize_ca()
-    manager.create_client_certificate("0004_Mango1")
+    manager.create_client_certificate("0004_Router1")
 
     result = manager.reset_pki_to_backup()
 
@@ -165,8 +165,8 @@ def test_resets_pki_by_moving_it_to_timestamped_backup(service) -> None:
     assert len(backups) == 1
     assert (backups[0] / "ca.crt").is_file()
     assert (backups[0] / "private" / "ca.key").is_file()
-    assert (backups[0] / "issued" / "0004_Mango1.crt").is_file()
-    assert (backups[0] / "private" / "0004_Mango1.key").is_file()
+    assert (backups[0] / "issued" / "0004_Router1.crt").is_file()
+    assert (backups[0] / "private" / "0004_Router1.key").is_file()
     assert str(backups[0]) in result.output
 
 
@@ -195,7 +195,7 @@ def test_openvpn_service_access_targets_only_server_runtime_material(
     pki = tmp_path / "pki"
     _create_server_runtime_material(pki)
     ca_key = pki / "private" / "ca.key"
-    client_key = pki / "private" / "0004_Mango1.key"
+    client_key = pki / "private" / "0004_Router1.key"
     ca_key.write_text("private", encoding="utf-8")
     client_key.write_text("private", encoding="utf-8")
     calls: list[list[str]] = []
