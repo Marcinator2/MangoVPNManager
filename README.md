@@ -190,8 +190,8 @@ Main commit while no release exists; otherwise resolve the failed publication
 before retrying. Never move or delete a published tag.
 
 Manually pushing a new stable tag still starts the Release workflow. Keep the
-workflow on the default branch (`develop`) as well as `main` so GitHub displays
-the manual start button. Manual runs on branches other than `main` are rejected.
+workflow on the default branch (`main`) so GitHub displays the manual start
+button. Manual runs on branches other than `main` are rejected.
 The workflow creates the tag and release in the same run; it does not rely on
 a tag created by `GITHUB_TOKEN` triggering another workflow.
 
@@ -205,8 +205,8 @@ not replace the latest stable release.
 
 Disable the publish checkbox for a build-only test. Both modes also provide
 downloadable workflow artifacts for 14 days. Only runs targeting `develop` are
-accepted. The workflow must remain on the repository's default branch for the
-manual run button to be available (currently `develop`).
+accepted. The workflow must remain on the repository's default branch (`main`)
+for the manual run button to be available; select `develop` when starting it.
 
 ## License and branding
 
