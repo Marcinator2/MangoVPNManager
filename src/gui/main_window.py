@@ -778,7 +778,7 @@ class MainWindow(QMainWindow):
 
     def export_list(self) -> None:
         filename, _ = QFileDialog.getSaveFileName(
-            self, self.t("export_list"), "MangoVPNManager.xlsx",
+            self, self.t("export_list"), "OpenVPNManager.xlsx",
             self.t("xlsx_filter"), options=QFileDialog.DontConfirmOverwrite,
         )
         if not filename:

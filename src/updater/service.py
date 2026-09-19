@@ -33,7 +33,7 @@ def prepare(root: Path, release: Release, cancel: threading.Event,
         write_json(operation / "job.json", {
             "protocol": 1, "root": str(root), "id": operation.name,
             "version": release.version, "pid": os.getpid(),
-            "creation": current_identity(root / "MangoVPNManager.exe"),
+            "creation": current_identity(root / "OpenVPNManager.exe"),
         })
         return operation
     except BaseException:
@@ -43,12 +43,12 @@ def prepare(root: Path, release: Release, cancel: threading.Event,
 
 
 def start_helper(root: Path, arguments: list[str], source: Path | None = None) -> tuple[subprocess.Popen, Path]:
-    source = source or root / "MangoVPNUpdater.exe"
+    source = source or root / "OpenVPNUpdater.exe"
     cleanup_helper(root)
     safe_tree(source)
-    temporary = Path(tempfile.mkdtemp(prefix="MangoVPNManager-updater-"))
+    temporary = Path(tempfile.mkdtemp(prefix="OpenVPNManager-updater-"))
     try:
-        helper = temporary / "MangoVPNUpdater.exe"
+        helper = temporary / "OpenVPNUpdater.exe"
         shutil.copy2(source, helper)
         environment = os.environ.copy()
         environment["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
@@ -72,14 +72,14 @@ def cleanup_helper(root: Path) -> bool:
             return True
         directory = Path(read_json(state)["directory"])
         if (directory.parent != Path(tempfile.gettempdir())
-                or not directory.name.startswith("MangoVPNManager-updater-")):
+                or not directory.name.startswith("OpenVPNManager-updater-")):
             raise UpdateError("path")
         safe_tree(directory)
         if directory.exists():
-            if any(item.name != "MangoVPNUpdater.exe" for item in directory.iterdir()):
+            if any(item.name != "OpenVPNUpdater.exe" for item in directory.iterdir()):
                 raise UpdateError("path")
             # Unlink the executable first. Windows refuses this while it runs.
-            (directory / "MangoVPNUpdater.exe").unlink(missing_ok=True)
+            (directory / "OpenVPNUpdater.exe").unlink(missing_ok=True)
             directory.rmdir()
         state.unlink()
         return True

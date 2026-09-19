@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for helping improve Mango VPN Manager.
+Thank you for helping improve OpenVPN Manager.
 
 ## Language
 
@@ -29,7 +29,7 @@ Turn off the publish input to verify the build without creating a tag or release
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q
 .\build.ps1
-.\scripts\assert-release-safe.ps1 -ApplicationDirectory .\dist\MangoVPNManager
+.\scripts\assert-release-safe.ps1 -ApplicationDirectory .\dist\OpenVPNManager
 ```
 
 Use Python 3.14. Run real Easy-RSA integration tests only against a temporary

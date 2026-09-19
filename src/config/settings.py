@@ -24,7 +24,7 @@ def resource_path(*parts: str) -> Path:
 
 
 DATA_DIR = application_root() / "data"
-DATABASE_PATH = DATA_DIR / "mango_vpn_manager.db"
+DATABASE_PATH = DATA_DIR / "openvpn_manager.db"
 SETTINGS_PATH = DATA_DIR / "settings.json"
 
 

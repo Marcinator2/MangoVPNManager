@@ -48,7 +48,7 @@ def test_update_offer_and_localization(gui, language):
     window.t.set_language(language)
     controller.retranslate()
     assert controller.action.text() == window.t("update_check")
-    release = Release("v1.1.0", "https://github.com/Marcinator2/MangoVPNManager/releases/tag/v1.1.0", "", "", "", 1)
+    release = Release("v1.1.0", "https://github.com/Marcinator2/OpenVPN-Manager/releases/tag/v1.1.0", "", "", "", 1)
     dialog = UpdateOffer(window, "v1.0.0", release)
     dialog.show()
     app.processEvents()

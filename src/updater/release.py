@@ -12,7 +12,7 @@ from typing import Callable
 
 from config.version import version_tuple
 
-REPOSITORY = "Marcinator2/MangoVPNManager"
+REPOSITORY = "Marcinator2/OpenVPN-Manager"
 API_URL = f"https://api.github.com/repos/{REPOSITORY}/releases/latest"
 MAX_DOWNLOAD = 512 * 1024 * 1024
 HOSTS = {"api.github.com", "github.com", "release-assets.githubusercontent.com",
@@ -77,7 +77,7 @@ class ReleaseClient:
         validate_url(url)
         check_cancel(cancel)
         request = urllib.request.Request(url, headers={
-            "User-Agent": "MangoVPNManager-Updater",
+            "User-Agent": "OpenVPNManager-Updater",
             "Accept": "application/vnd.github+json" if url == API_URL else "application/octet-stream",
             "X-GitHub-Api-Version": "2022-11-28",
         })
@@ -130,7 +130,7 @@ class ReleaseClient:
             candidate = version_tuple(tag)
             if candidate <= version_tuple(current):
                 return None
-            name = f"MangoVPNManager-{tag}-windows-x64.zip"
+            name = f"OpenVPNManager-{tag}-windows-x64.zip"
             assets = raw["assets"]
             archive, checksum = ([asset for asset in assets if asset["name"] == key]
                                  for key in (name, name + ".sha256"))

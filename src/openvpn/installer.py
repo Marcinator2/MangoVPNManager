@@ -187,7 +187,7 @@ def install_server_files(
     )
     backup_root = (
         plan.config_dir.parent
-        / "MangoVPNManager-backups"
+        / "OpenVPNManager-backups"
         / datetime.now().strftime("%Y%m%d-%H%M%S")
     )
     written: list[Path] = []

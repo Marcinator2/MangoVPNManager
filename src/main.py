@@ -29,7 +29,7 @@ def run_application() -> int:
     from gui.theme import apply_theme
 
     application = QApplication(sys.argv)
-    application.setApplicationName("Mango VPN Manager")
+    application.setApplicationName("OpenVPN Manager")
     application.setApplicationVersion(read_build_info().version)
     # Load Qt and UI modules without opening user data or contacting services.
     if "--smoke-test" in sys.argv:
@@ -48,7 +48,7 @@ def run_application() -> int:
     try:
         database = Database(DATABASE_PATH)
     except Exception as exc:
-        QMessageBox.critical(None, "Mango VPN Manager", f"Could not open database:\n{exc}")
+        QMessageBox.critical(None, "OpenVPN Manager", f"Could not open database:\n{exc}")
         return 1
     window = MainWindow(database, settings)
     window.show()

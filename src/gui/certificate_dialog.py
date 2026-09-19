@@ -351,7 +351,7 @@ class CertificateDialog(QDialog):
             return
         self._run_busy(
             lambda: self.service.initialize_ca(
-                common_name="MangoVPNManager-CA",
+                common_name="OpenVPNManager-CA",
                 validity_days=3650,
             )
         )

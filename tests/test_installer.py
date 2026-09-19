@@ -52,7 +52,7 @@ def test_install_writes_only_server_and_ccd_and_backs_up_existing(tmp_path: Path
         "ccd/0004_Mango1",
     }
     assert not (config_dir / "clients").exists()
-    backups = list((config_dir.parent / "MangoVPNManager-backups").rglob("server.ovpn"))
+    backups = list((config_dir.parent / "OpenVPNManager-backups").rglob("server.ovpn"))
     assert len(backups) == 1
     assert backups[0].read_text(encoding="utf-8") == "old server"
     assert acl_targets == written

@@ -1,7 +1,13 @@
 from pathlib import Path
 
-from config.settings import AppSettings, load_settings, save_settings
+from config.settings import AppSettings, DATABASE_PATH, load_settings, save_settings
 from gui.theme import normalize_theme, stylesheet
+from openvpn.easyrsa import DEFAULT_PKI_PATH
+
+
+def test_renamed_default_data_paths() -> None:
+    assert DATABASE_PATH.name == "openvpn_manager.db"
+    assert str(DEFAULT_PKI_PATH) == r"C:\ProgramData\OpenVPNManager\pki"
 
 
 def test_settings_round_trip_includes_theme(tmp_path: Path) -> None:

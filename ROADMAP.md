@@ -1,6 +1,6 @@
 # Roadmap
 
-Mango VPN Manager is currently an early-stage Windows desktop application.
+OpenVPN Manager is currently an early-stage Windows desktop application.
 Priorities may change based on testing and security findings.
 
 ## Near term

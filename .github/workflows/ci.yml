@@ -42,11 +42,11 @@ jobs:
 
       - name: Smoke test packaged updater with synthetic data
         shell: pwsh
-        run: python scripts/smoke_update.py dist/MangoVPNManager
+        run: python scripts/smoke_update.py dist/OpenVPNManager
 
       - name: Verify release contents
         shell: pwsh
-        run: .\scripts\assert-release-safe.ps1 -ApplicationDirectory .\dist\MangoVPNManager
+        run: .\scripts\assert-release-safe.ps1 -ApplicationDirectory .\dist\OpenVPNManager
 
   secret-scan:
     name: Gitleaks
