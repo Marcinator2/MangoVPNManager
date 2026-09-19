@@ -50,7 +50,8 @@ Primary files:
 - 'src/updater/': release downloads, package validation, Windows locks, and
   journaled program replacement through a standalone helper.
 - 'src/gui/update_controller.py': asynchronous update UI and shutdown handoff.
-- 'src/gui/main_window.py': main window, tree, and guided workflow.
+- 'src/gui/main_window*.py': main window entry point plus separate view,
+  runtime/table, workflow/selection, and action modules.
 - 'src/gui/certificate_dialog.py': CA, server, and Mango certificate workflow.
 - 'src/gui/export_dialog.py': guided configuration export.
 - 'src/gui/theme.py': light/dark QSS and enabled/disabled button styling.
@@ -131,14 +132,19 @@ the uniqueness constraints in SQLite.
 
 ## Current user workflow
 
-The main window contains a four-step guided setup panel:
+The main window uses a two-pane management layout with the branch tree on the
+left and a complete device table on the right. Device, network, certificate,
+configuration, and connection fields are shown as table columns; the internal
+branch ID remains available to the application but is hidden from the table.
+Incomplete setup is shown as a compact prompt; the full four-step setup
+overview opens in a separate dialog:
 
 1. Create branches and Mangos.
 2. Prepare the CA, server material, and Mango certificates.
 3. Enter the public VPN server address and port.
 4. Review, export, or explicitly install configurations.
 
-The primary “next step” button must always lead to the first incomplete step.
+The setup dialog's primary “next step” button must always lead to the first incomplete step.
 The progress display is calculated from the database, configured PKI, server
 material, and saved VPN server address.
 
@@ -436,6 +442,7 @@ building; local staging verification passes the staging directory instead.
 - Light/dark themes and bilingual UI work.
 - Branch/Mango CRUD and automatic internal IDs work.
 - Guided four-step setup flow works.
+- The main window uses a synchronized branch tree and complete device table.
 - Real CA, server-material, and Mango certificate operations are implemented.
 - Recoverable PKI reset is implemented.
 - Complete server/client/CCD export generation is implemented.
