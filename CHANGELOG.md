@@ -5,6 +5,12 @@ All notable changes to this project are documented here. The project uses
 
 ## [Unreleased]
 
+### Added
+
+- Manual stable releases from main with explicit version input and an optional
+  build-only run. Tags, application versions, ZIP names, and releases share the
+  same validated version, with complete-history scanning before publication.
+
 ## [0.1.0] - 2026-09-16
 
 ### Added

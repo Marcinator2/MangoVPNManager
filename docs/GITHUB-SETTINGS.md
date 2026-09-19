@@ -43,3 +43,16 @@ into `main`.
 3. Create and push the annotated tag `v0.1.0` on `main`.
 4. Confirm the Release workflow publishes the ZIP and checksum.
 5. Download the ZIP, verify the checksum, and perform a clean-system smoke test.
+
+## Subsequent stable releases
+
+Use **Actions > Release > Run workflow**, select **main**, and enter a new
+semantic version. The publish checkbox controls whether the run creates the
+tag and release or only produces downloadable build artifacts. The workflow
+must also remain on the default branch (`develop`) for manual dispatch.
+
+No additional secret or branch protection bypass is required. The release job
+uses its repository-scoped `GITHUB_TOKEN` to create a new annotated tag and the
+release after all validation succeeds. Existing protected tags are never
+updated or deleted. Continue requiring pull requests and successful checks for
+all changes to `main`.

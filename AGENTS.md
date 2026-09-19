@@ -67,6 +67,7 @@ Primary files:
 - 'scripts/assert-release-safe.ps1': release-content safety gate.
 - 'scripts/capture_screenshot.py': synthetic documentation screenshot tool.
 - 'scripts/smoke_update.py': packaged updater test using disposable synthetic data.
+- 'scripts/release_version.py': stable version and commit validation, immutable tag creation.
 - '.github/workflows/': Windows CI, stable tagged releases, and manual develop builds.
 
 ## Public repository hygiene
@@ -78,6 +79,14 @@ Primary files:
   OpenVPN profiles, exports, or private reference material.
 - 'main' contains release-ready changes; normal work targets 'develop' through
   pull requests. Stable release tags use semantic versions such as 'v0.1.0'.
+- 'Release' supports manual runs on 'main' with an explicit version and publish
+  checkbox, plus existing stable tag pushes. Version numbers are not auto-bumped.
+  Normalize input to 'vX.Y.Z', require a newer stable version, refuse existing
+  releases and tags on other commits, and pin scanning/building/tagging to the
+  same Main commit. Create new annotated tags only after every check passes.
+  Build-only runs create no tags or releases; artifacts are retained 14 days.
+  Keep the workflow on default 'develop' too for manual dispatch. Tag and
+  release creation happen in the same run without token-trigger recursion.
 - 'Develop Build' runs manually on 'develop', scans complete history, tests,
   builds, and checks package contents before publishing a pre-release with a
   unique 'develop-<run ID>-<attempt>' tag on the tested commit. It never replaces
@@ -372,7 +381,7 @@ Run tests:
 
     .\.venv\Scripts\python.exe -m pytest -q
 
-At the time this file was updated, the suite contains 139 passing tests.
+At the time this file was updated, the suite contains 165 passing tests.
 
 For risky Easy-RSA changes, supplement unit tests with a real integration test
 against an automatically deleted temporary PKI. A useful regression sequence
@@ -441,4 +450,5 @@ building; local staging verification passes the staging directory instead.
 - Stable-release updater, data-free startup validation, external helper,
   interrupted-transaction recovery, and preserved-data update smoke test work.
 - The Windows staging build and release-content safety check pass.
-- The test suite passes with 139 tests.
+- Manual stable-release version validation and immutable tag safeguards pass.
+- The test suite passes with 165 tests.
