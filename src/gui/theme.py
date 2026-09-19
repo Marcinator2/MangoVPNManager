@@ -28,6 +28,15 @@ QWidget {{
 QMainWindow, QDialog {{
     background: {colors["window_top"]};
 }}
+QScrollArea#terminologyScroll,
+QScrollArea#terminologyScroll QWidget#qt_scrollarea_viewport,
+QWidget#terminologyContent {{
+    color: {colors["text"]};
+    background: {colors["surface"]};
+}}
+QScrollArea#terminologyScroll {{
+    border: 1px solid {colors["border"]};
+}}
 QMenuBar {{
     background: {colors["surface_alt"]};
     border-bottom: 1px solid {colors["border"]};

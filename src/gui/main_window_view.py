@@ -1,16 +1,19 @@
 from __future__ import annotations
 
+from dataclasses import replace
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QActionGroup, QPixmap
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QApplication,
+    QBoxLayout,
+    QDialog,
     QFrame,
-    QHeaderView,
     QHBoxLayout,
-    QLabel,
+    QHeaderView,
     QMenu,
-    QPushButton,
+    QMessageBox,
     QSplitter,
     QToolButton,
     QTreeWidget,
@@ -19,7 +22,11 @@ from PySide6.QtWidgets import (
 )
 
 from config.settings import resource_path, save_settings
+from gui.plain_text import PlainLabel as QLabel, message_text
+from gui.sizing import button_row_fits
+from gui.terminology_dialog import TerminologyDialog
 from gui.theme import apply_theme
+from gui.wrapping_button import WrappingButton as QPushButton
 
 
 class MainWindowViewMixin:
@@ -78,7 +85,8 @@ class MainWindowViewMixin:
         self.more_menu.addAction(self.xlsx_action)
         self.more_button.setMenu(self.more_menu)
 
-        tools = QHBoxLayout()
+        tools = QBoxLayout(QBoxLayout.LeftToRight)
+        self.tools_layout = tools
         tools.setContentsMargins(0, 0, 0, 0)
         tools.setSpacing(6)
         for button in (self.add_branch_button, self.add_mango_button, self.edit_button):
@@ -114,6 +122,7 @@ class MainWindowViewMixin:
         workflow_layout.setSpacing(8)
         self.workflow_summary_label = QLabel()
         self.workflow_summary_label.setObjectName("workflowSummary")
+        self.workflow_summary_label.setWordWrap(True)
         self.next_step_button = QPushButton()
         self.next_step_button.clicked.connect(self._run_next_workflow_step)
         workflow_layout.addWidget(self.workflow_summary_label, 1)
@@ -135,7 +144,7 @@ class MainWindowViewMixin:
         self.workspace_splitter.setObjectName("workspaceSplitter")
         self.workspace_splitter.addWidget(branch_panel)
         self.workspace_splitter.addWidget(self.device_table)
-        self.workspace_splitter.setSizes([205, 1020])
+        self.workspace_splitter.setSizes([260, 965])
         self.workspace_splitter.setStretchFactor(0, 0)
         self.workspace_splitter.setStretchFactor(1, 1)
         self.workspace_splitter.setCollapsible(1, False)
@@ -145,7 +154,7 @@ class MainWindowViewMixin:
         self.server_status_value = QLabel()
         self.server_status_value.setObjectName("runtimeStatus")
         self.server_status_value.setProperty("state", "unknown")
-        self.server_status_value.setToolTip(str(self.runtime.status_path))
+        self.server_status_value.setToolTip(message_text(str(self.runtime.status_path)))
         self.count_status_label = QLabel()
         self.selection_status_label = QLabel()
         status_bar.addWidget(self.server_status_title)
@@ -188,6 +197,11 @@ class MainWindowViewMixin:
             self.appearance_menu.addAction(action)
             action.triggered.connect(lambda checked, a=action: self.set_theme(a.data()))
 
+        self.settings_menu = self.menuBar().addMenu("")
+        self.terminology_action = QAction(self)
+        self.terminology_action.triggered.connect(self.edit_terminology)
+        self.settings_menu.addAction(self.terminology_action)
+
         self.setup_menu = self.menuBar().addMenu("")
         self.setup_action = QAction(self)
         self.setup_action.triggered.connect(self.show_setup)
@@ -216,6 +230,8 @@ class MainWindowViewMixin:
         self.xlsx_action.setText(self.t("export_list"))
         self.language_menu.setTitle(self.t("language"))
         self.appearance_menu.setTitle(self.t("appearance"))
+        self.settings_menu.setTitle(self.t("settings"))
+        self.terminology_action.setText(self.t("terminology_title"))
         self.setup_menu.setTitle(self.t("setup"))
         self.setup_action.setText(self.t("open_setup"))
         self.light_theme_action.setText(self.t("light_theme"))
@@ -236,6 +252,7 @@ class MainWindowViewMixin:
         self.german_action.setChecked(self.settings.language == "de")
         self.light_theme_action.setChecked(self.settings.theme == "light")
         self.dark_theme_action.setChecked(self.settings.theme == "dark")
+        self._update_toolbar_layout()
 
     def set_theme(self, theme: str) -> None:
         if theme not in {"light", "dark"}:
@@ -254,3 +271,39 @@ class MainWindowViewMixin:
         save_settings(self.settings)
         self._retranslate()
         self.reload_tree()
+
+    def edit_terminology(self) -> None:
+        dialog = TerminologyDialog(self.t, self.settings.terminology, self)
+        if dialog.exec() == QDialog.Accepted:
+            self.apply_terminology(dialog.value())
+
+    def apply_terminology(self, terminology) -> bool:
+        candidate = replace(self.settings, terminology=terminology)
+        try:
+            save_settings(candidate)
+        except OSError as exc:
+            QMessageBox.warning(self, self.t("settings"), message_text(self.t("settings_save_error", exc)))
+            return False
+        self.settings.terminology = candidate.terminology
+        self.translator.set_terminology(candidate.terminology)
+        # Only refresh labels: no status synchronization, database writes or selection changes.
+        self._retranslate()
+        self._update_workflow()
+        self._update_selection_status()
+        self.count_status_label.setText(self.t(
+            "branch_device_count", len(self.database.list_branches()), len(self.database.list_mangos())
+        ))
+        return True
+
+    def _update_toolbar_layout(self) -> None:
+        buttons = (
+            self.add_branch_button, self.add_mango_button, self.edit_button,
+            self.more_button, self.certificate_button, self.export_button,
+        )
+        fits = button_row_fits([button.sizeHint().width() for button in buttons], self.width() - 40)
+        self.tools_layout.setDirection(QBoxLayout.LeftToRight if fits else QBoxLayout.TopToBottom)
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        if hasattr(self, "tools_layout"):
+            self._update_toolbar_layout()

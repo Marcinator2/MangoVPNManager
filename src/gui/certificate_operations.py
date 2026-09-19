@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QInputDialog, QMessageBox
 
+from gui.plain_text import message_text
 from openvpn.easyrsa import EasyRSAResult
 
 
@@ -10,7 +11,7 @@ class CertificateOperationsMixin:
         answer = QMessageBox.warning(
             self,
             self._t("reset_pki"),
-            self._t("reset_pki_question").format(self.settings.pki_path),
+            message_text(self._t("reset_pki_question", self.settings.pki_path)),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )
@@ -28,7 +29,7 @@ class CertificateOperationsMixin:
             QMessageBox.warning(
                 self,
                 self._t("reset_pki"),
-                self._t("reset_pki_phrase_mismatch"),
+                message_text(self._t("reset_pki_phrase_mismatch")),
             )
             return
 
@@ -46,10 +47,7 @@ class CertificateOperationsMixin:
         answer = QMessageBox.warning(
             self,
             self._t("initialize_ca"),
-            self._t("initialize_ca_question").format(
-                self.settings.pki_path,
-                preview,
-            ),
+            message_text(self._t("initialize_ca_question", self.settings.pki_path, preview)),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )
@@ -67,7 +65,7 @@ class CertificateOperationsMixin:
         answer = QMessageBox.warning(
             self,
             self._t("create_server_material"),
-            self._t("create_server_material_question").format(preview),
+            message_text(self._t("create_server_material_question", preview)),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )
@@ -88,10 +86,7 @@ class CertificateOperationsMixin:
         answer = QMessageBox.question(
             self,
             self._t("create_all_certificates"),
-            self._t("create_all_certificates_question").format(
-                len(mangos),
-                names,
-            ),
+            message_text(self._t("create_all_certificates_question", len(mangos), names)),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )
@@ -119,7 +114,7 @@ class CertificateOperationsMixin:
         answer = QMessageBox.question(
             self,
             self._t("create_certificate"),
-            self._t("create_certificate_question").format(mango.name),
+            message_text(self._t("create_certificate_question", mango.name)),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )

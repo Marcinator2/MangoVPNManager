@@ -3,25 +3,43 @@
 [![CI](https://github.com/Marcinator2/OpenVPN-Manager/actions/workflows/ci.yml/badge.svg)](https://github.com/Marcinator2/OpenVPN-Manager/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-OpenVPN Manager is a local Windows desktop application for managing branch
-sites, Mango routers, OpenVPN certificates, server configuration, exports, and
+OpenVPN Manager is a local Windows desktop application for managing
+locations, routers, OpenVPN certificates, server configuration, exports, and
 live connection status. It is published by the unregistered **mb-soft** project.
 
 ![OpenVPN Manager main window](docs/screenshots/main-window.png)
 
 ## Features
 
-- Manage branches and up to ten Mango routers per branch.
-- Calculate VPN and LAN addressing from protected internal branch IDs.
-- Show oven IP addresses, subnet masks, and gateways in the list.
-- Export all Mango rows to XLSX with localized headers and Excel filters.
-- Create a CA, server material, and passwordless Mango client certificates.
+- Manage locations and up to ten routers per location.
+- Calculate VPN and LAN addressing from protected internal location IDs.
+- Show device IP addresses, subnet masks, and gateways in the list.
+- Export all router rows to XLSX with localized headers and Excel filters.
+- Create a CA, server material, and passwordless router client certificates.
 - Generate server configuration, CCD files, and client profiles.
 - Preview exports with private material redacted.
 - Compare and explicitly install the complete server configuration.
-- Monitor OpenVPN and display live Mango connection information.
+- Monitor OpenVPN and display live router connection information.
 - Use English or German UI text and light or dark themes.
 - Check for stable releases and install verified updates after confirmation.
+
+## Display terms
+
+Open **Settings > Display terms** to customize the singular and plural names for
+locations, VPN routers, and connected devices. English and German have separate
+fields; editing one language does not switch the application language. Empty
+fields use the general defaults. Terms may contain up to 40 Unicode characters,
+including spaces, but no control characters.
+
+The preview updates as you type. **Apply** saves the terms and refreshes the UI
+without changing selection or certificate/configuration state. **Cancel** discards
+the draft. **Restore defaults** clears only the language currently being edited;
+apply the draft to save that reset. Terms also appear in Excel headers.
+
+New router identities always use `<location identifier>_Router<number>`, for
+example `0004_Router1`. Display terms and language changes never rename these
+identities, certificate files, or VPN profiles. Previous test data is not migrated
+or deleted automatically. The network addressing model remains unchanged.
 
 ## Requirements
 
@@ -164,15 +182,15 @@ files, or exports to an issue. See [SECURITY.md](SECURITY.md).
 
 ## Addressing model
 
-- VPN address: `10.8.<internal ID>.<Mango number>`
-- Mango LAN: `10.<internal ID>.<Mango number>.0/24`
-- Mango LAN IP: `10.<internal ID>.<Mango number>.1`
-- Oven IP: `10.<internal ID>.<Mango number>.<100 + Mango number>`
-- Oven subnet mask: `255.255.255.0`
-- Oven gateway: the Mango LAN IP (`10.<internal ID>.<Mango number>.1`)
+- VPN address: `10.8.<internal ID>.<router number>`
+- Router LAN: `10.<internal ID>.<router number>.0/24`
+- Router LAN IP: `10.<internal ID>.<router number>.1`
+- Device IP: `10.<internal ID>.<router number>.<100 + router number>`
+- Device subnet mask: `255.255.255.0`
+- Device gateway: the Router LAN IP (`10.<internal ID>.<router number>.1`)
 
-The VPN pool is `10.8.0.0/16`; internal branch ID `8` is reserved to prevent
-overlap with Mango LAN networks.
+The VPN pool is `10.8.0.0/16`; internal location ID `8` is reserved to prevent
+overlap with Router LAN networks.
 
 ## Contributing and releases
 

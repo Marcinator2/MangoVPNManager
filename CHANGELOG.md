@@ -5,7 +5,17 @@ All notable changes to this project are documented here. The project uses
 
 ## [Unreleased]
 
+### Added
+
+- Settings dialog for per-language singular/plural display terms, with live preview,
+  safe free text, defaults, and matching Excel headers.
+
 ### Changed
+
+- Default terminology is now Location, Router and Device. New router identities
+  use the fixed `_Router` prefix independently of display terms; old test data
+  is not migrated automatically.
+- Long action labels wrap and stack to fit the available screen.
 
 - Renamed the project and packaged application to OpenVPN Manager, including
   executables, release archives, updater identifiers, and default data paths.

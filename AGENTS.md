@@ -1,7 +1,7 @@
 # OpenVPN Manager — agent project context
 
 This repository contains OpenVPN Manager, a Windows desktop tool for managing
-branches, Mango routers, OpenVPN certificates, and configuration exports.
+locations, routers, OpenVPN certificates, and configuration exports.
 
 ## Immutable reference material
 
@@ -52,13 +52,16 @@ Primary files:
 - 'src/gui/update_controller.py': asynchronous update UI and shutdown handoff.
 - 'src/gui/main_window*.py': main window entry point plus separate view,
   runtime/table, workflow/selection, and action modules.
-- 'src/gui/certificate_dialog.py': CA, server, and Mango certificate workflow.
+- 'src/gui/certificate_dialog.py': CA, server, and Router certificate workflow.
 - 'src/gui/export_dialog.py': guided configuration export.
 - 'src/gui/theme.py': light/dark QSS and enabled/disabled button styling.
 - 'src/gui/sizing.py': translated-content-aware, screen-bounded dialog sizing.
-- 'src/gui/i18n.py': all English and German UI strings.
+- 'src/gui/i18n.py': term-aware translator; 'i18n_en.py' and 'i18n_de.py' hold UI strings.
+- 'src/config/terminology.py': display-term validation and normalization.
+- 'src/gui/terminology_dialog.py': per-language display terms, draft editing and preview.
+- 'src/gui/plain_text.py' and 'wrapping_button.py': literal text and wrapping action labels.
 - 'src/database/database.py': SQLite schema and persistence.
-- 'src/database/models.py': branch and Mango models.
+- 'src/database/models.py': location/router models (internal Branch/Mango names retained).
 - 'src/openvpn/addressing.py': validation and address calculation.
 - 'src/openvpn/easyrsa.py': Easy-RSA/OpenVPN integration and PKI ACL handling.
 - 'src/openvpn/exporter.py': CCD, client, and server configuration generation.
@@ -78,7 +81,7 @@ Primary files:
 
 - Public repository: 'Marcinator2/OpenVPN-Manager'.
 - Use English for comments, docstrings, commit messages, and documentation.
-  German is allowed only as localized UI content in 'src/gui/i18n.py'.
+  German is allowed in localized UI resources and their regression tests.
 - Never commit runtime databases, settings, logs, status files, PKI material,
   OpenVPN profiles, exports, or private reference material.
 - 'main' contains release-ready changes; normal work targets 'develop' through
@@ -107,23 +110,23 @@ Primary files:
 
 ## Naming and addressing rules
 
-A Mango name is:
+A Router name is:
 
-'<branch number>_Mango<Mango number>'
+'<branch number>_Mango<Router number>'
 
-Example: '0004_Mango1'.
+Example: '0004_Router1'.
 
 The internal branch ID, not the visible branch number, controls addressing:
 
-- VPN address: '10.8.<internal ID>.<Mango number>'
-- Mango LAN: '10.<internal ID>.<Mango number>.0/24'
-- Mango LAN IP: '10.<internal ID>.<Mango number>.1'
-- Oven subnet mask: derived from the Mango LAN network (`255.255.255.0`).
-- Oven gateway: the Mango LAN IP.
-- Oven IP: '10.<internal ID>.<Mango number>.<100 + Mango number>'
+- VPN address: '10.8.<internal ID>.<Router number>'
+- Router LAN: '10.<internal ID>.<Router number>.0/24'
+- Router LAN IP: '10.<internal ID>.<Router number>.1'
+- Device subnet mask: derived from the Router LAN network (`255.255.255.0`).
+- Device gateway: the Router LAN IP.
+- Device IP: '10.<internal ID>.<Router number>.<100 + Router number>'
 
 The VPN network is '10.8.0.0/16'. Internal branch ID '8' is reserved because
-its LAN networks would overlap the VPN range. Mango numbers are limited to
+its LAN networks would overlap the VPN range. Router numbers are limited to
 1–10 per branch. Internal IDs are assigned automatically and must be unique.
 The internal ID is not exposed as an editable field in the normal branch flow.
 
@@ -139,8 +142,8 @@ branch ID remains available to the application but is hidden from the table.
 Incomplete setup is shown as a compact prompt; the full four-step setup
 overview opens in a separate dialog:
 
-1. Create branches and Mangos.
-2. Prepare the CA, server material, and Mango certificates.
+1. Create branches and Routers.
+2. Prepare the CA, server material, and Router certificates.
 3. Enter the public VPN server address and port.
 4. Review, export, or explicitly install configurations.
 
@@ -152,23 +155,23 @@ In the certificate dialog the intended strict order is:
 
 1. Initialize PKI / CA.
 2. Create server material.
-3. Create all missing Mango certificates.
+3. Create all missing Router certificates.
 
 Only currently meaningful actions should be enabled. Disabled buttons must
 remain visibly distinct in both light and dark themes. Keep the guidance label
 synchronized with the real state.
 
-Creating all missing Mango certificates is the primary, recommended, and
+Creating all missing Router certificates is the primary, recommended, and
 default action once CA and server material are ready. Creating only the
-selected Mango certificate is a secondary exception action.
+selected Router certificate is a secondary exception action.
 
 In the export assistant:
 
 - Preview is always allowed.
 - Required missing fields are visually highlighted.
-- Repeated missing Mango certificate warnings are summarized.
+- Repeated missing Router certificate warnings are summarized.
 - The export button is enabled only when the VPN server address, CA, server
-  certificate/key, all selected Mango certificate/key pairs, and export
+  certificate/key, all selected Router certificate/key pairs, and export
   directory are available.
 - The TLS-crypt key is optional for export readiness but should be used when
   available.
@@ -179,11 +182,11 @@ In the export assistant:
   stored configuration-created states.
 
 The main list shows description next to name instead of the internal ID.
-Descriptions need not be unique. Branch names have a Mango-count prefix and
+Descriptions need not be unique. Branch names have a Router-count prefix and
 start collapsed; reloads preserve the expanded branches.
-The main list includes oven IP, subnet mask, and gateway. Its separate XLSX
-export includes only Mango rows from all branches (including collapsed entries), uses
-localized headers, repeats the parent branch description on each Mango row,
+The main list includes device IP, subnet mask, and gateway. Its separate XLSX
+export includes only Router rows from all branches (including collapsed entries), uses
+localized headers, repeats the parent branch description on each Router row,
 preserves text and leading zeroes, and requires confirmation
 before replacing a file. It does not change configuration-created statuses.
 
@@ -193,7 +196,7 @@ Certificate operations are real, not placeholders, and always require explicit
 user confirmation.
 
 - CA: passwordless, default validity 3650 days.
-- Mango client certificates: passwordless, default validity 825 days.
+- Router client certificates: passwordless, default validity 825 days.
 - Server certificate: common name 'server', passwordless.
 - TLS-crypt key: generated as 'ta.key' through OpenVPN.
 - Never overwrite an existing certificate, request, or private key silently.
@@ -242,8 +245,8 @@ A bundle contains:
 
 - 'server.ovpn'
 - 'server_routes.conf'
-- 'ccd/<Mango name>'
-- 'clients/<Mango name>.ovpn'
+- 'ccd/<Router name>'
+- 'clients/<Router name>.ovpn'
 - 'EXPORT_README.txt'
 
 Client profiles embed the existing CA certificate, client certificate, private
@@ -252,7 +255,7 @@ must always be redacted from the on-screen preview. Before writing a bundle
 that contains private keys, require an explicit security confirmation.
 
 'server.ovpn' uses the '10.8.0.0/16' VPN pool and contains a route for every
-selected Mango LAN. It references the configured PKI and the normal OpenVPN
+selected Router LAN. It references the configured PKI and the normal OpenVPN
 configuration directory.
 
 Quoted Windows paths in generated OpenVPN configurations must contain doubled
@@ -273,7 +276,7 @@ Server installation is a separate, explicitly confirmed action:
   registry settings; use 'config-auto' and 'log' only as fallbacks.
 - Install only 'server.ovpn' and 'ccd/*'. Never install embedded client profiles
   on the server.
-- Permit installation only for the complete “All Mangos” scope so a partial
+- Permit installation only for the complete “All Routers” scope so a partial
   selection cannot replace the full server routing configuration.
 - Back up replaced files to a timestamped sibling directory outside the
   OpenVPN configuration scan directory.
@@ -331,10 +334,10 @@ Server installation is a separate, explicitly confirmed action:
 - A server is green only when the Windows service is running and its status
   file is fresh. Use red for stopped/stale and gray when status cannot be
   determined.
-- Match connected Mangos by certificate common name. Show connected since,
+- Match connected Routers by certificate common name. Show connected since,
   remote peer IP, and the persisted last-seen time without displaying secrets.
 - Treat unavailable or stale status data as unknown rather than falsely
-  reporting a Mango as disconnected.
+  reporting a Router as disconnected.
 
 ## Database status semantics
 
@@ -351,6 +354,20 @@ The database stores certificate-created and configuration-created state.
 Do not report an item as ready based only on a stale database flag.
 
 ## UI and localization
+
+- General defaults are Location/Locations, Router/Routers and Device/Devices
+  (localized in German). Settings > Display terms customizes singular/plural per
+  language; empty or invalid saved fields use the defaults. Free text is limited
+  to 40 characters without control characters. Treat it literally, including
+  braces, ampersands and HTML-like text.
+- Use explicit term tokens in localized templates and pass runtime arguments to
+  Translator directly; never format an already translated string containing terms.
+- Applying terms refreshes labels only, preserving selection, tree expansion and
+  certificate/configuration status. Excel headers use the same terms; sanitize
+  sheet names to Excel's character and length restrictions.
+- Router identities use the fixed `_Router` prefix, independently of UI terms
+  and language. No automatic migration or deletion of old test data or PKIs.
+- Internal Branch/Mango class, table and field names are implementation details.
 
 - UI languages: English and German.
 - English is the default for a fresh installation; the chosen language persists.
@@ -403,7 +420,7 @@ Run tests:
 
     .\.venv\Scripts\python.exe -m pytest -q
 
-At the time this file was updated, the suite contains 165 passing tests.
+At the time this file was updated, the suite contains 197 passing tests.
 
 For risky Easy-RSA changes, supplement unit tests with a real integration test
 against an automatically deleted temporary PKI. A useful regression sequence
@@ -452,15 +469,16 @@ building; local staging verification passes the staging directory instead.
 
 - Python 3.14 application and PyInstaller build work.
 - Light/dark themes and bilingual UI work.
-- Branch/Mango CRUD and automatic internal IDs work.
+- Per-language display terms, general defaults, literal free text and fixed Router identities work.
+- Branch/Router CRUD and automatic internal IDs work.
 - Guided four-step setup flow works.
 - The main window uses a synchronized branch tree and complete device table.
-- Real CA, server-material, and Mango certificate operations are implemented.
+- Real CA, server-material, and Router certificate operations are implemented.
 - Recoverable PKI reset is implemented.
 - Complete server/client/CCD export generation is implemented.
 - Explicit server installation with detected OpenVPN paths, recoverable
   replacement backups, and separately confirmed service restart is implemented.
-- Live server/Mango connection indicators show connected-since, peer IP, and
+- Live server/Router connection indicators show connected-since, peer IP, and
   persisted last-seen information.
 - Dialog widths adapt to translated content and long certificate actions stack
   automatically on narrower displays.
@@ -476,4 +494,4 @@ building; local staging verification passes the staging directory instead.
 - Manual stable-release version validation and immutable tag safeguards pass.
 - The application, executables, release packages, and repository are named OpenVPN Manager.
 - New installations use 'openvpn_manager.db' and the OpenVPNManager ProgramData PKI path.
-- The test suite passes with 166 tests.
+- The test suite passes with 197 tests.

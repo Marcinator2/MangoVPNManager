@@ -17,31 +17,29 @@ _SAFE_BRANCH_NUMBER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,49}$")
 class ValidationError(ValueError):
     """A value cannot safely be used by the application."""
 
+    def __init__(self, message: str, *, translation_key: str | None = None):
+        super().__init__(message)
+        self.translation_key = translation_key
+
 
 def validate_branch_number(branch_number: str) -> str:
     normalized = branch_number.strip()
     if not _SAFE_BRANCH_NUMBER.fullmatch(normalized):
-        raise ValidationError(
-            "Branch number must be 1-50 characters and contain only letters, "
-            "digits, hyphens, or underscores."
-        )
+        raise ValidationError('Location number must be 1-50 characters and contain only letters, digits, hyphens, or underscores.', translation_key='validation_location_number')
     return normalized
 
 
 def validate_internal_id(internal_id: int) -> int:
     if not MIN_INTERNAL_ID <= internal_id <= MAX_INTERNAL_ID:
-        raise ValidationError("Internal branch ID must be between 1 and 254.")
+        raise ValidationError('Internal location ID must be between 1 and 254.', translation_key='validation_internal_id')
     if internal_id in RESERVED_INTERNAL_IDS:
-        raise ValidationError(
-            "Internal branch ID 8 is reserved because its LAN overlaps the "
-            "10.8.0.0/16 VPN network."
-        )
+        raise ValidationError('Internal location ID 8 is reserved because its LAN overlaps the 10.8.0.0/16 VPN network.', translation_key='validation_reserved_id')
     return internal_id
 
 
 def validate_mango_number(mango_number: int) -> int:
     if not MIN_MANGO_NUMBER <= mango_number <= MAX_MANGO_NUMBER:
-        raise ValidationError("Mango number must be between 1 and 10.")
+        raise ValidationError('Router number must be between 1 and 10.', translation_key='validation_router_number')
     return mango_number
 
 
@@ -53,7 +51,7 @@ def calculate_addresses(
     mango_number = validate_mango_number(mango_number)
 
     values = MangoAddresses(
-        name=f"{branch_number}_Mango{mango_number}",
+        name=f"{branch_number}_Router{mango_number}",
         vpn_ip=f"10.8.{internal_id}.{mango_number}",
         lan_network=f"10.{internal_id}.{mango_number}.0/24",
         mango_ip=f"10.{internal_id}.{mango_number}.1",

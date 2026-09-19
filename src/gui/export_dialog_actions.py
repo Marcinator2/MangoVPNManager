@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QFileDialog, QMessageBox
 
 from config.settings import save_settings
 from gui.certificate_dialog import CertificateDialog
+from gui.plain_text import message_text
 from openvpn.addressing import ValidationError
 from openvpn.easyrsa import (
     EasyRSAError,
@@ -39,29 +40,21 @@ class ExportDialogActionsMixin:
                 plan = build_server_install_plan(bundle, self.runtime.config_dir)
                 status = self._inspect_server_installation(plan)
             except (ValidationError, OSError) as exc:
-                text = self._t("install_status_unknown").format(exc)
+                text = self._t("install_status_unknown", exc)
             else:
                 if status.state == "current":
                     state = "ready"
-                    text = self._t("install_status_current").format(
-                        status.current_files,
-                        status.total_files,
-                    )
+                    text = self._t("install_status_current", status.current_files, status.total_files)
                     button_text = self._t("installation_current_button")
                     tooltip = self._t("install_status_current_tooltip")
                 elif status.state == "not_installed":
                     state = "warning"
-                    text = self._t("install_status_missing").format(
-                        len(status.missing_files),
-                    )
+                    text = self._t("install_status_missing", len(status.missing_files))
                     button_enabled = True
                     tooltip = ""
                 elif status.state == "update_required":
                     state = "warning"
-                    text = self._t("install_status_update").format(
-                        len(status.changed_files),
-                        len(status.missing_files),
-                    )
+                    text = self._t("install_status_update", len(status.changed_files), len(status.missing_files))
                     button_text = self._t("update_server")
                     button_enabled = True
                     tooltip = ""
@@ -72,14 +65,14 @@ class ExportDialogActionsMixin:
                     button_enabled = True
                     tooltip = ""
                 else:
-                    text = self._t("install_status_unknown").format("")
+                    text = self._t("install_status_unknown", "")
         self.install_status.setText(f"●  {text}")
         self.install_status.setProperty("status", state)
         self.install_status.style().unpolish(self.install_status)
         self.install_status.style().polish(self.install_status)
         self.install_button.setText(button_text)
         self.install_button.setEnabled(button_enabled)
-        self.install_button.setToolTip(tooltip)
+        self.install_button.setToolTip(message_text(tooltip))
 
     def _inspect_server_installation(self, plan) -> ServerInstallStatus:
         status = inspect_server_installation(plan)
@@ -140,14 +133,14 @@ class ExportDialogActionsMixin:
                 QMessageBox.information(
                     self,
                     self._t("export_not_ready_title"),
-                    self._t("export_disabled_hint"),
+                    message_text(self._t("export_disabled_hint")),
                 )
                 return
             if bundle.contains_private_keys:
                 answer = QMessageBox.warning(
                     self,
                     self._t("sensitive_export_title"),
-                    self._t("sensitive_export_question"),
+                    message_text(self._t("sensitive_export_question")),
                     QMessageBox.Yes | QMessageBox.No,
                     QMessageBox.No,
                 )
@@ -160,7 +153,7 @@ class ExportDialogActionsMixin:
                 answer = QMessageBox.question(
                     self,
                     self._t("overwrite_title"),
-                    self._t("overwrite_question").format(len(collisions)),
+                    message_text(self._t("overwrite_question", len(collisions))),
                     QMessageBox.Yes | QMessageBox.No,
                     QMessageBox.No,
                 )
@@ -183,16 +176,16 @@ class ExportDialogActionsMixin:
             self._original_server_port = port
             save_settings(self.settings)
         except (ValidationError, FileExistsError, OSError) as exc:
-            QMessageBox.critical(self, self._t("export_failed"), str(exc))
+            QMessageBox.critical(self, self._t("export_failed"), message_text(self._t.error(exc)))
             return
         self.exported = True
-        message = self._t("export_complete_text").format(len(written))
+        message = self._t("export_complete_text", len(written))
         if bundle.warnings:
             message += "\n\n" + self._t("export_complete_warning")
         QMessageBox.information(
             self,
             self._t("export_complete"),
-            message,
+            message_text(message),
         )
         self.accept()
 
@@ -215,29 +208,22 @@ class ExportDialogActionsMixin:
             plan = build_server_install_plan(bundle, self.runtime.config_dir)
             install_status = self._inspect_server_installation(plan)
         except (ValidationError, OSError, EasyRSAError) as exc:
-            QMessageBox.critical(self, self._t("install_failed"), str(exc))
+            QMessageBox.critical(self, self._t("install_failed"), message_text(self._t.error(exc)))
             return
 
         repair_permissions = (
             install_status.state == "permissions_repair_required"
         )
         if repair_permissions:
-            question = self._t("repair_permissions_question").format(
-                len(plan.files),
-                plan.config_dir,
-            )
+            question = self._t("repair_permissions_question", len(plan.files), plan.config_dir)
             title = self._t("repair_server_permissions")
         else:
-            question = self._t("install_server_question").format(
-                len(plan.files),
-                plan.config_dir,
-                len(plan.collisions),
-            )
+            question = self._t("install_server_question", len(plan.files), plan.config_dir, len(plan.collisions))
             title = self._t("install_server_title")
         answer = QMessageBox.warning(
             self,
             title,
-            question,
+            message_text(question),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )
@@ -258,14 +244,14 @@ class ExportDialogActionsMixin:
             QMessageBox.critical(
                 self,
                 self._t("install_failed"),
-                self._t("install_failed_text").format(exc),
+                message_text(self._t("install_failed_text", exc)),
             )
             return
 
         restart = QMessageBox.question(
             self,
             self._t("restart_service_title"),
-            self._t("restart_service_question"),
+            message_text(self._t("restart_service_question")),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )
@@ -278,20 +264,14 @@ class ExportDialogActionsMixin:
                 QMessageBox.warning(
                     self,
                     self._t("restart_service_failed"),
-                    str(exc),
+                    message_text(self._t.error(exc)),
                 )
         if repair_permissions:
-            message = self._t("repair_permissions_complete").format(
-                len(written),
-                plan.config_dir,
-            )
+            message = self._t("repair_permissions_complete", len(written), plan.config_dir)
         else:
-            message = self._t("install_complete_text").format(
-                len(written),
-                plan.config_dir,
-            )
+            message = self._t("install_complete_text", len(written), plan.config_dir)
         if restarted:
             message += "\n\n" + self._t("restart_service_complete")
-        QMessageBox.information(self, self._t("install_complete"), message)
+        QMessageBox.information(self, self._t("install_complete"), message_text(message))
         self.exported = True
         self.accept()

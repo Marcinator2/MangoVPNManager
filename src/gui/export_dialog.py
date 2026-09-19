@@ -7,13 +7,12 @@ from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QFileDialog,
-    QFormLayout,
     QFrame,
     QHBoxLayout,
-    QLabel,
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QSizePolicy,
     QSpinBox,
     QTextEdit,
     QVBoxLayout,
@@ -24,6 +23,7 @@ from database.database import Database
 from database.models import Mango
 from gui.certificate_dialog import CertificateDialog
 from gui.export_dialog_actions import ExportDialogActionsMixin
+from gui.plain_text import PlainFormLayout as QFormLayout, PlainLabel as QLabel, message_text
 from gui.sizing import resize_dialog_to_content
 from openvpn.addressing import ValidationError
 from openvpn.easyrsa import (
@@ -72,6 +72,8 @@ class ExportDialog(ExportDialogActionsMixin, QDialog):
         self.setWindowTitle(self._t("export_title"))
 
         self.scope_combo = QComboBox()
+        self.scope_combo.setMinimumContentsLength(16)
+        self.scope_combo.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
         self.scope_combo.addItem(self._t("selected_mango"), "mango")
         self.scope_combo.addItem(self._t("selected_branch"), "branch")
         self.scope_combo.addItem(self._t("all_mangos"), "all")
@@ -134,7 +136,11 @@ class ExportDialog(ExportDialogActionsMixin, QDialog):
         self.install_status.setWordWrap(True)
         self.install_path = QLabel(str(self.runtime.config_dir))
         self.install_path.setObjectName("installationPath")
-        self.install_path.setToolTip(str(self.runtime.config_dir))
+        for label in (self.material_status, self.install_title, self.install_status, self.install_path):
+            label.setWordWrap(True)
+            label.setMinimumWidth(0)
+            label.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+        self.install_path.setToolTip(message_text(str(self.runtime.config_dir)))
         install_text_layout.addWidget(self.install_title)
         install_text_layout.addWidget(self.install_status)
         install_text_layout.addWidget(self.install_path)
@@ -153,7 +159,9 @@ class ExportDialog(ExportDialogActionsMixin, QDialog):
         buttons.rejected.connect(self.reject)
 
         layout = QVBoxLayout(self)
-        layout.addWidget(QLabel(self._t("export_security_notice")))
+        security_notice = QLabel(self._t("export_security_notice"))
+        security_notice.setWordWrap(True)
+        layout.addWidget(security_notice)
         layout.addLayout(form)
         layout.addLayout(status_row)
         layout.addWidget(self.install_frame)
@@ -218,7 +226,7 @@ class ExportDialog(ExportDialogActionsMixin, QDialog):
             name = warning.removeprefix(
                 "Certificate or private key is missing for "
             ).removesuffix(".")
-            return self._t("warning_mango_material_missing").format(name)
+            return self._t("warning_mango_material_missing", name)
         return mapping.get(warning, warning)
 
     def _show_preview(self, *_args) -> None:
@@ -245,9 +253,7 @@ class ExportDialog(ExportDialogActionsMixin, QDialog):
                 self.material_status.setProperty("status", "ready")
             elif bundle.ready_for_export:
                 self.material_status.setText(
-                    self._t("export_not_ready").format(
-                        f"• {self._t('export_folder_missing')}"
-                    )
+                    self._t("export_not_ready", f"• {self._t('export_folder_missing')}")
                 )
                 self.material_status.setProperty("status", "warning")
             else:
@@ -272,21 +278,15 @@ class ExportDialog(ExportDialogActionsMixin, QDialog):
                         len(bundle.mango_ids) - len(missing_mangos)
                     )
                     details.append(
-                        self._t("warning_mango_material_summary").format(
-                            complete,
-                            len(bundle.mango_ids),
-                            ", ".join(missing_mangos),
-                        )
+                        self._t("warning_mango_material_summary", complete, len(bundle.mango_ids), ", ".join(missing_mangos))
                     )
                 self.material_status.setText(
-                    self._t("export_not_ready").format(
-                        "\n".join(f"• {detail}" for detail in details)
-                    )
+                    self._t("export_not_ready", "\n".join(f"• {detail}" for detail in details))
                 )
                 self.material_status.setProperty("status", "warning")
         except ValidationError as exc:
-            self.preview_edit.setPlainText(str(exc))
-            self.material_status.setText(str(exc))
+            self.preview_edit.setPlainText(self._t.error(exc))
+            self.material_status.setText(self._t.error(exc))
             self.material_status.setProperty("status", "warning")
         self.material_status.style().unpolish(self.material_status)
         self.material_status.style().polish(self.material_status)
@@ -303,7 +303,7 @@ class ExportDialog(ExportDialogActionsMixin, QDialog):
         )
         self.write_button.setEnabled(ready)
         self.write_button.setToolTip(
-            "" if ready else self._t("export_disabled_hint")
+            message_text("" if ready else self._t("export_disabled_hint"))
         )
         self._update_installation_panel(bundle)
         certificate_warning = (

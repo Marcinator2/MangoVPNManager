@@ -7,11 +7,8 @@ from PySide6.QtGui import QBrush, QColor
 from PySide6.QtWidgets import QTreeWidgetItem
 
 from database.models import Mango
-from gui.main_window_shared import (
-    NORMAL_STATUS_INTERVAL_MS,
-    ROLE_ID,
-    ROLE_TYPE,
-)
+from gui.main_window_shared import NORMAL_STATUS_INTERVAL_MS, ROLE_ID, ROLE_TYPE
+from gui.plain_text import message_text
 from gui.theme import theme_color
 
 
@@ -35,13 +32,16 @@ class MainWindowRuntimeMixin:
             mangos_by_branch.setdefault(mango.branch_id, []).append(mango)
         for branch in branches:
             branch_mangos = mangos_by_branch.get(branch.id, [])
+            branch_title = f"({len(branch_mangos)}) {branch.branch_number}"
+            if branch.description:
+                branch_title += f" - {branch.description}"
             branch_item = QTreeWidgetItem(
-                [f"({len(branch_mangos)}) {branch.branch_number}", branch.description]
+                [branch_title, branch.description]
                 + [""] * 12
             )
             branch_item.setData(0, ROLE_TYPE, "branch")
             branch_item.setData(0, ROLE_ID, branch.id)
-            branch_item.setToolTip(0, branch.description)
+            branch_item.setToolTip(0, message_text(branch.description))
             if branch.id is not None:
                 branch_items[branch.id] = branch_item
             for column in range(self.tree.columnCount()):
@@ -171,9 +171,7 @@ class MainWindowRuntimeMixin:
             finally:
                 self._syncing_selection = False
         self.count_status_label.setText(
-            self.t("branch_device_count").format(
-                len(self.database.list_branches()), len(self.database.list_mangos())
-            )
+            self.t("branch_device_count", len(self.database.list_branches()), len(self.database.list_mangos()))
         )
         self._update_selection_status()
 

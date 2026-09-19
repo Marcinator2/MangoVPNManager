@@ -21,11 +21,7 @@ from gui.main_window_shared import (
 from gui.main_window_view import MainWindowViewMixin
 from gui.main_window_workflow import MainWindowWorkflowMixin
 from gui.update_controller import UpdateController
-from openvpn.runtime import (
-    discover_openvpn_runtime,
-    openvpn_service_running,
-    read_status_snapshot,
-)
+from openvpn.runtime import discover_openvpn_runtime, openvpn_service_running, read_status_snapshot
 
 
 class MainWindow(
@@ -40,7 +36,7 @@ class MainWindow(
         self.database = database
         self.settings = settings
         self.build_info = read_build_info()
-        self.translator = Translator(settings.language)
+        self.translator = Translator(settings.language, settings.terminology)
         self.runtime = discover_openvpn_runtime(settings.openvpn_root)
         self._mango_items = {}
         self._device_items = {}
