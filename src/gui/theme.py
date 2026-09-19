@@ -5,69 +5,7 @@ from pathlib import Path
 
 from PySide6.QtWidgets import QApplication
 
-
-PALETTES: dict[str, dict[str, str]] = {
-    "light": {
-        "window_top": "#e7eaee",
-        "window_bottom": "#d9dee4",
-        "surface": "#eef1f4",
-        "surface_alt": "#e5e9ed",
-        "surface_hover": "#dce6f5",
-        "input": "#f2f4f6",
-        "text": "#252a31",
-        "muted": "#66707c",
-        "border": "#c5ccd5",
-        "border_strong": "#aab4c0",
-        "selection": "#cfdeF5",
-        "selection_text": "#17365f",
-        "branch": "#e1e6ec",
-        "ready": "#168150",
-        "offline": "#bd3945",
-        "pending": "#7b8592",
-        "shadow": "#550f1824",
-        "badge": "#dce8f8",
-        "danger_surface": "#f2e4e5",
-        "disabled_text": "#8c949e",
-        "disabled_surface": "#d2d7dd",
-        "disabled_border": "#b7bec7",
-        "warning_surface": "#f2ead7",
-        "warning_text": "#875f12",
-    },
-    "dark": {
-        "window_top": "#292d32",
-        "window_bottom": "#1f2226",
-        "surface": "#30343a",
-        "surface_alt": "#292d33",
-        "surface_hover": "#35445a",
-        "input": "#272b30",
-        "text": "#e7eaee",
-        "muted": "#abb3bf",
-        "border": "#454b54",
-        "border_strong": "#626b77",
-        "selection": "#294b78",
-        "selection_text": "#f1f6ff",
-        "branch": "#373c43",
-        "ready": "#65d49a",
-        "offline": "#ff747e",
-        "pending": "#9ba5b2",
-        "shadow": "#99000000",
-        "badge": "#263c5d",
-        "danger_surface": "#4a3034",
-        "disabled_text": "#6f7782",
-        "disabled_surface": "#24272b",
-        "disabled_border": "#353a41",
-        "warning_surface": "#453d2c",
-        "warning_text": "#f0c66a",
-    },
-}
-
-
-def normalize_theme(theme: str) -> str:
-    return theme if theme in PALETTES else "light"
-
-
-def theme_color(theme: str, name: str) -> str:
-    return PALETTES[normalize_theme(theme)][name]
+from gui.theme_palette import PALETTES, normalize_theme, theme_color
 
 
 def _icon_path(name: str) -> str:
@@ -88,11 +26,7 @@ QWidget {{
     font-size: 10pt;
 }}
 QMainWindow, QDialog {{
-    background: qlineargradient(
-        x1: 0, y1: 0, x2: 1, y2: 1,
-        stop: 0 {colors["window_top"]},
-        stop: 1 {colors["window_bottom"]}
-    );
+    background: {colors["window_top"]};
 }}
 QMenuBar {{
     background: {colors["surface_alt"]};
@@ -100,8 +34,8 @@ QMenuBar {{
     padding: 4px 10px;
 }}
 QMenuBar::item {{
-    border-radius: 6px;
-    padding: 6px 10px;
+    border-radius: 2px;
+    padding: 5px 9px;
 }}
 QMenuBar::item:selected {{
     background: {colors["surface_hover"]};
@@ -113,26 +47,22 @@ QMenu {{
     padding: 6px;
 }}
 QMenu::item {{
-    border-radius: 5px;
-    padding: 7px 28px 7px 10px;
+    border-radius: 2px;
+    padding: 6px 28px 6px 9px;
 }}
 QMenu::item:selected {{
     background: {colors["selection"]};
     color: {colors["selection_text"]};
 }}
 QFrame#brandHeader {{
-    background: qlineargradient(
-        x1: 0, y1: 0, x2: 1, y2: 1,
-        stop: 0 {colors["surface"]},
-        stop: 1 {colors["surface_alt"]}
-    );
+    background: {colors["surface_alt"]};
     border: 1px solid {colors["border"]};
-    border-radius: 14px;
+    border-radius: 2px;
 }}
 QFrame#workflowPanel {{
     background: {colors["surface"]};
     border: 1px solid {colors["border"]};
-    border-radius: 12px;
+    border-radius: 2px;
 }}
 QFrame#runtimePanel {{
     background: {colors["surface"]};
@@ -142,7 +72,7 @@ QFrame#runtimePanel {{
 QFrame#installationPanel {{
     background: {colors["surface_alt"]};
     border: 1px solid {colors["border"]};
-    border-radius: 10px;
+    border-radius: 3px;
 }}
 QLabel#installationTitle {{
     color: {colors["text"]};
@@ -204,7 +134,7 @@ QLabel#guidanceLabel {{
     color: #438fff;
     background: {colors["badge"]};
     border: 1px solid #4676b5;
-    border-radius: 8px;
+    border-radius: 3px;
     padding: 8px 10px;
     font-weight: 600;
 }}
@@ -215,8 +145,8 @@ QLabel#logoTile {{
 }}
 QLabel#brandTitle {{
     color: {colors["text"]};
-    font-size: 19pt;
-    font-weight: 700;
+    font-size: 11pt;
+    font-weight: 600;
 }}
 QLabel#brandSubtitle {{
     color: {colors["muted"]};
@@ -233,7 +163,7 @@ QLabel#exportStatus {{
     color: {colors["text"]};
     background: {colors["surface_alt"]};
     border: 1px solid {colors["border"]};
-    border-radius: 8px;
+    border-radius: 3px;
     padding: 8px 10px;
 }}
 QLabel#exportStatus[status="ready"] {{
@@ -249,8 +179,8 @@ QPushButton {{
     color: {colors["text"]};
     background: {colors["surface"]};
     border: 1px solid {colors["border"]};
-    border-radius: 8px;
-    padding: 8px 13px;
+    border-radius: 3px;
+    padding: 5px 10px;
     min-height: 18px;
 }}
 QPushButton:hover {{
@@ -308,12 +238,12 @@ QTreeWidget {{
     background: {colors["surface"]};
     alternate-background-color: {colors["surface_alt"]};
     border: 1px solid {colors["border"]};
-    border-radius: 10px;
+    border-radius: 0;
     outline: none;
-    padding: 2px;
+    padding: 0;
 }}
 QTreeWidget::item {{
-    min-height: 32px;
+    min-height: 27px;
     border-bottom: 1px solid {colors["border"]};
 }}
 QTreeWidget::item:hover {{
@@ -329,15 +259,15 @@ QHeaderView::section {{
     border: none;
     border-right: 1px solid {colors["border"]};
     border-bottom: 1px solid {colors["border"]};
-    padding: 9px 8px;
+    padding: 6px 7px;
     font-weight: 600;
 }}
 QLineEdit, QSpinBox, QComboBox, QTextEdit {{
     color: {colors["text"]};
     background: {colors["input"]};
     border: 1px solid {colors["border"]};
-    border-radius: 7px;
-    padding: 7px 9px;
+    border-radius: 3px;
+    padding: 6px 8px;
     selection-color: #ffffff;
     selection-background-color: #2476ff;
 }}
@@ -393,6 +323,54 @@ QComboBox QAbstractItemView {{
 }}
 QDialogButtonBox {{
     margin-top: 8px;
+}}
+QToolButton {{
+    color: {colors["text"]};
+    background: {colors["surface"]};
+    border: 1px solid {colors["border"]};
+    border-radius: 3px;
+    padding: 5px 10px;
+    min-height: 18px;
+}}
+QToolButton:hover {{
+    background: {colors["surface_hover"]};
+}}
+QPushButton#scopeButton {{
+    text-align: left;
+    font-weight: 600;
+}}
+QPushButton#scopeButton:checked {{
+    color: {colors["selection_text"]};
+    background: {colors["selection"]};
+    border-color: {colors["border_strong"]};
+}}
+QGroupBox {{
+    background: {colors["surface"]};
+    border: 1px solid {colors["border"]};
+    border-radius: 2px;
+    margin-top: 8px;
+    padding-top: 6px;
+    font-weight: 600;
+}}
+QGroupBox::title {{
+    subcontrol-origin: margin;
+    left: 8px;
+    padding: 0 4px;
+}}
+QLabel#detailsTitle, QLabel#dialogTitle {{
+    font-size: 13pt;
+    font-weight: 700;
+}}
+QLabel#detailsSubtitle, QLabel#emptyHint {{
+    color: {colors["muted"]};
+}}
+QSplitter::handle {{
+    background: {colors["border"]};
+    width: 1px;
+}}
+QStatusBar {{
+    background: {colors["surface_alt"]};
+    border-top: 1px solid {colors["border"]};
 }}
 QMessageBox {{
     background: {colors["surface"]};
