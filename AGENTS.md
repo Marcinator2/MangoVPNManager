@@ -380,6 +380,18 @@ Do not report an item as ready based only on a stale database flag.
   cleaned up.
 - Existing user data in a dirty worktree belongs to the user; preserve it.
 
+## Code organization
+
+- Aim to keep hand-written source and test files at or below 400 lines.
+- When a file grows beyond 400 lines, prefer splitting it along clear
+  responsibilities as part of the relevant change, provided the split improves
+  cohesion and does not introduce unnecessary coupling.
+- Treat 400 lines as a maintainability target rather than a mechanical limit.
+  Do not create artificial modules, duplicate code, or mix unrelated refactoring
+  into a focused fix solely to satisfy the line count.
+- Generated files, vendored code, data fixtures, and other machine-maintained
+  artifacts are exempt.
+
 ## Development and verification
 
 Create or refresh the environment only when needed:
