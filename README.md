@@ -13,12 +13,15 @@ live connection status. It is published by the unregistered **mb-soft** project.
 
 - Manage branches and up to ten Mango routers per branch.
 - Calculate VPN and LAN addressing from protected internal branch IDs.
+- Show oven IP addresses, subnet masks, and gateways in the list.
+- Export all Mango rows to XLSX with localized headers and Excel filters.
 - Create a CA, server material, and passwordless Mango client certificates.
 - Generate server configuration, CCD files, and client profiles.
 - Preview exports with private material redacted.
 - Compare and explicitly install the complete server configuration.
 - Monitor OpenVPN and display live Mango connection information.
 - Use English or German UI text and light or dark themes.
+- Check for stable releases and install verified updates after confirmation.
 
 ## Requirements
 
@@ -44,17 +47,69 @@ Get-Content .\MangoVPNManager-v0.1.0-windows-x64.zip.sha256
 The hashes must match exactly. Release archives never contain a database,
 settings, certificates, keys, exported profiles, or other runtime data.
 
+## Application updates
+
+Packaged stable releases check GitHub once after startup. Use **Updates > Check
+for updates** to check again. **Update now** downloads the newer stable release,
+verifies its SHA-256 checksum and archive layout, tests startup without opening
+user data, then closes and restarts the application. **Later** leaves the
+installed version unchanged. Downloads and preparation can be cancelled.
+Develop pre-releases and source builds do not install or automatically check
+for updates. Versions without an updater need one manual upgrade first.
+
+The updater replaces only `MangoVPNManager.exe`, `_internal/`, and
+`MangoVPNUpdater.exe`. It preserves `data/`, settings, databases, PKI, exports,
+and other files outside those managed program entries. It never controls
+OpenVPN services. Close other application instances before updating. If the
+installation folder is protected, restart the application as administrator;
+the updater does not request elevation itself. Preparation requires approximately
+3 GiB plus the download size of free space. ZIP downloads are limited to
+512 MiB and extracted packages to 1.5 GiB.
+
+Updates use the public GitHub release feed without credentials. The release
+workflow verifies that stable tags belong to `main`. HTTPS and SHA-256 protect
+transport and download integrity; the binaries remain unsigned and the checksum
+is not an independent publisher signature.
+
+### Recovery
+
+The updater records its transaction under `.mango-update/` and retains the last
+program backup under `.mango-update/<transaction-id>/backup/`. Replacement
+failures restore the previous program files. Interrupted replacements are
+recovered before the next normal startup opens the database.
+
+If an interruption left the EXE or its runtime temporarily unavailable, close
+all instances and run the standalone helper from the installation directory:
+
+```powershell
+.\MangoVPNUpdater.exe --recover (Get-Location).Path
+```
+
+If that helper is also missing, run the copy in the transaction's `backup/`
+directory with `--recover` and the absolute installation directory. The helper
+copies itself outside the installation before restoring files. Do not delete
+the transaction directory until recovery succeeds.
+
+The latest backup also permits manual restoration of the three managed program
+entries after a later startup problem. Close the application first and retain
+the failed program files separately. Never replace or merge `data/` as part of
+program recovery. Recovery does not undo database changes made by a later
+application version; future schema changes must account for that compatibility
+boundary.
+
 ## Development setup
 
 ```powershell
 git clone https://github.com/Marcinator2/MangoVPNManager.git
 cd MangoVPNManager
-py -3.14 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements-dev.txt
-python src\main.py
+.\build.ps1 -Start
 ```
+
+The script checks Python 3.14, creates a missing `.venv`, installs development
+dependencies, and runs pip check. Install Python 3.14 with the Python launcher
+first. Existing invalid environments are reported without replacing them.
+`-Start` runs from source instead of building the EXE; omit it to build.
+Do not combine `-Start` with `-Clean` or `-StagingOnly`. Environment activation is not required.
 
 Source execution stores SQLite data and settings under the local `data/`
 directory. Packaged execution uses `data/` beside the EXE. Both are ignored.
@@ -65,10 +120,19 @@ directory. Packaged execution uses `data/` beside the EXE. Both are ignored.
 .\.venv\Scripts\python.exe -m pytest -q
 .\build.ps1
 .\scripts\assert-release-safe.ps1 -ApplicationDirectory .\dist\MangoVPNManager
+.\.venv\Scripts\python.exe scripts\smoke_update.py dist\MangoVPNManager
 ```
 
 CI may pass an already provisioned interpreter explicitly with
-`-PythonExecutable`; local builds default to `.venv`.
+`-PythonExecutable`; local builds default to `.venv`. Stable release CI passes
+`-ReleaseVersion vX.Y.Z`; builds without this parameter are development builds.
+The embedded identity includes version, build type, and source commit.
+
+Use `-StagingOnly` to build without replacing an existing packaged installation.
+Its output is `build/package-staging/MangoVPNManager`; pass that directory to
+the safety check and smoke test instead. The smoke test uses temporary program
+copies and synthetic data, tests the real helper, and cleans up its own test
+processes and files. It does not download a release or use the live PKI.
 
 The build script preserves an existing packaged `data/` directory. The safety
 check therefore intentionally rejects a local release folder containing data.
@@ -94,6 +158,8 @@ files, or exports to an issue. See [SECURITY.md](SECURITY.md).
 - Mango LAN: `10.<internal ID>.<Mango number>.0/24`
 - Mango LAN IP: `10.<internal ID>.<Mango number>.1`
 - Oven IP: `10.<internal ID>.<Mango number>.<100 + Mango number>`
+- Oven subnet mask: `255.255.255.0`
+- Oven gateway: the Mango LAN IP (`10.<internal ID>.<Mango number>.1`)
 
 The VPN pool is `10.8.0.0/16`; internal branch ID `8` is reserved to prevent
 overlap with Mango LAN networks.
@@ -103,6 +169,19 @@ overlap with Mango LAN networks.
 Development happens on `develop`; release-ready changes reach `main` through a
 pull request. See [CONTRIBUTING.md](CONTRIBUTING.md), [ROADMAP.md](ROADMAP.md),
 and [CHANGELOG.md](CHANGELOG.md).
+
+To publish a development build, open **Actions > Develop Build > Run workflow**,
+select **develop**, leave **Publish a GitHub pre-release** enabled, and start the
+workflow. It scans the complete history for secrets, runs tests, builds Windows
+binaries, and checks the package for private or runtime data before publishing.
+Each run uses a unique `develop-<run ID>-<attempt>` tag on the exact tested commit
+and attaches a ZIP and SHA-256 checksum. It is marked as a pre-release and does
+not replace the latest stable release.
+
+Disable the publish checkbox for a build-only test. Both modes also provide
+downloadable workflow artifacts for 14 days. Only runs targeting `develop` are
+accepted. The workflow must remain on the repository's default branch for the
+manual run button to be available (currently `develop`).
 
 ## License and branding
 

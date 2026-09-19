@@ -40,6 +40,10 @@ jobs:
         shell: pwsh
         run: .\build.ps1 -PythonExecutable (Get-Command python).Source
 
+      - name: Smoke test packaged updater with synthetic data
+        shell: pwsh
+        run: python scripts/smoke_update.py dist/MangoVPNManager
+
       - name: Verify release contents
         shell: pwsh
         run: .\scripts\assert-release-safe.ps1 -ApplicationDirectory .\dist\MangoVPNManager
