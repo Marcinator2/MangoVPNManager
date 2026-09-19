@@ -69,7 +69,7 @@ Primary files:
 - 'src/openvpn/installer.py': confirmed server-file installation, backups, and
   service restart.
 - 'tests/': automated tests.
-- 'icons/': company icon and code-native spin-box arrow assets.
+- 'icons/': company icon, language flags, and code-native spin-box arrow assets.
 - 'build.ps1': Windows packaging script.
 - 'scripts/assert-release-safe.ps1': release-content safety gate.
 - 'scripts/capture_screenshot.py': synthetic documentation screenshot tool.
@@ -370,6 +370,7 @@ Do not report an item as ready based only on a stale database flag.
 - Internal Branch/Mango class, table and field names are implementation details.
 
 - UI languages: English and German.
+- Language menu entries include SVG flags (UK for English, Germany for German).
 - English is the default for a fresh installation; the chosen language persists.
 - Any new user-visible string must be added in both languages.
 - Themes: light and dark, both gray-based rather than pure white/black.

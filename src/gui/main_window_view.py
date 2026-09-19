@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import replace
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QAction, QActionGroup, QPixmap
+from PySide6.QtGui import QAction, QActionGroup, QIcon, QPixmap
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -181,6 +181,8 @@ class MainWindowViewMixin:
         self.english_action.setData("en")
         self.german_action.setData("de")
         for action in (self.english_action, self.german_action):
+            action.setIcon(QIcon(str(resource_path("icons", f"flag-{action.data()}.svg"))))
+            action.setIconVisibleInMenu(True)
             language_group.addAction(action)
             self.language_menu.addAction(action)
             action.triggered.connect(lambda checked, a=action: self.set_language(a.data()))
